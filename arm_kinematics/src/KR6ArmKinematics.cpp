@@ -75,9 +75,15 @@ bool KR6ArmKinematics::solveIK(const Pose & pose, const std::vector<double> & co
     solution(0) = q1; solution(1) = q2; solution(2) = q3; solution(3) = q4; solution(4) = q5; solution(5) = q6;
 
     bool valid = checkAngles(solution); 
-
     if (valid == false) {
-        std::cout << "Solution not valid, configuration: " << configuration[0] << ", " << configuration[1] << ", " << configuration[2] << std::endl;
+        std::cout << "Solution not valid. Anglse out of range. Configuration: " << configuration[0] << ", " << configuration[1] << ", " << configuration[2] << std::endl;
+        return false;
+    }
+
+    Vector3d testPosition = solveFK(solution);
+    Vector3d diffPosition = testPosition - pose.position;
+    if (diffPosition.norm() > 0.001) {
+        std::cout << "Solution not valid. Position is not equal to task. Configuration: " << configuration[0] << ", " << configuration[1] << ", " << configuration[2] << std::endl;
         return false;
     }
 
