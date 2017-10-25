@@ -40,23 +40,31 @@ bool KR6ArmKinematics::solveIK(const Pose & pose, const std::vector<double> & co
     pos(1) -= d5*rotMatrix(1,0);
     pos(2) -= d5*rotMatrix(2,0);
 
+    std::cout << "pos: (" << pos(0) << ", " << pos(1) << ")" << std::endl;
+
     q1 = atan2(-pos(1), pos(0)); // plus/minus pi
     if (configuration[0] != 0) {
-        if (q1 > M_PI + minJointAngles[0]) q1 += configuration[0];
-        else if (q1 < maxJointAngles[0] - M_PI) q1 -= configuration[0];
+        if (q1 > M_PI + minJointAngles[0]) q1 -= configuration[0];
+        else if (q1 < maxJointAngles[0] - M_PI) q1 += configuration[0];
         else {
             std::cerr << "Solution with configuration: (" << configuration[0] << ", " << configuration[1] << ", " << configuration[2] << ") is NOT exist." << std::endl;
             return false;
         }
     }
 
-    planePos(0) = cos(q1)*pos(0) + sin(q1)*pos(1) - d1;
-    planePos(1) = -sin(q1)*pos(0) + cos(q1)*pos(1);
+    planePos(0) = cos(q1)*pos(0) - sin(q1)*pos(1) - d1;
+    planePos(1) = sin(q1)*pos(0) + cos(q1)*pos(1);
     planePos(2) = pos(2) - d0;
 
-    d = sqrt(d4*d4 + d3*d3);
 
+    d = sqrt(d4*d4 + d3*d3);
     cosAng = (planePos(0)*planePos(0) + planePos(2)*planePos(2) - d2*d2 - d*d)/(2*d2*d);
+
+    if (cosAng > 1) {
+        std::cerr << "Solution with configuration: (" << configuration[0] << ", " << configuration[1] << ", " << configuration[2] << ") is NOT exist. Cosine of angle > 1." << std::endl;
+        return false;
+    }
+
     ang = configuration[1]*atan2(sqrt(1 - cosAng*cosAng), cosAng); // plus/minus
     q3 = ang + atan(d3/d4);
     q2 = atan2(-planePos(2), planePos(0)) - atan2(d*sin(ang), d2 + d*cos(ang));
@@ -71,7 +79,7 @@ bool KR6ArmKinematics::solveIK(const Pose & pose, const std::vector<double> & co
 
     q6 = atan2(rotMatrix(0,1)*cos(q1)*cos(q2+q3) - rotMatrix(1,1)*sin(q1)*cos(q2+q3) - rotMatrix(2,1)*sin(q2+q3),
         rotMatrix(0,1)*cos(q1)*cos(q2+q3) - rotMatrix(1,1)*sin(q1)*cos(q2+q3) - rotMatrix(2,1)*sin(q2+q3));
-   
+
     solution(0) = q1; solution(1) = q2; solution(2) = q3; solution(3) = q4; solution(4) = q5; solution(5) = q6;
 
     bool valid = checkAngles(solution); 
@@ -94,14 +102,18 @@ matrix::Matrix<double, 3, 3> KR6ArmKinematics::calcRotMatix(const double alpha, 
 
     matrix::Matrix<double, 3, 3> orientation;
     orientation(0,0) = cos(beta)*cos(gamma);
-    orientation(0,1) = sin(gamma)*cos(beta);
-    orientation(0,2) = -sin(beta);
-    orientation(1,0) = sin(alpha)*sin(beta)*cos(gamma) - sin(gamma)*cos(alpha);
+    orientation(0,1) = sin(alpha)*sin(beta)*cos(gamma) - sin(gamma)*cos(alpha);
+    orientation(0,2) = sin(alpha)*sin(gamma) + sin(beta)*cos(alpha)*cos(gamma);
+    orientation(1,0) = sin(gamma)*cos(beta);
     orientation(1,1) = sin(alpha)*sin(beta)*sin(gamma) + cos(alpha)*cos(gamma);
-    orientation(1,2) = sin(alpha)*cos(beta);
-    orientation(2,0) = sin(alpha)*sin(gamma) + sin(beta)*cos(alpha)*cos(gamma);
-    orientation(2,1) = -sin(alpha)*cos(gamma) + sin(beta)*sin(gamma)*cos(alpha);
+    orientation(1,2) = -sin(alpha)*cos(gamma) + sin(beta)*sin(gamma)*cos(alpha);
+    orientation(2,0) = -sin(beta);
+    orientation(2,1) = sin(alpha)*cos(beta);
     orientation(2,2) = cos(alpha)*cos(beta);
+
+    // std::cout << "Rot Matrix: {" << orientation(0,0) << ", " << orientation(0,1) << ", " << orientation(0, 2) << "}" << std::endl;
+    // std::cout << "Rot Matrix: {" << orientation(1,0) << ", " << orientation(1,1) << ", " << orientation(1, 2) << "}" << std::endl;
+    // std::cout << "Rot Matrix: {" << orientation(2,0) << ", " << orientation(2,1) << ", " << orientation(2, 2) << "}" << std::endl;
 
     return orientation;
 }
@@ -111,9 +123,9 @@ bool KR6ArmKinematics::checkAngles(const JointValues & jointValues)
     bool valid = true;
     for (size_t i = 0; i < DOF; ++i) {
         if (jointValues(i) < minJointAngles[i] || jointValues(i) > maxJointAngles[i]) {
-           valid = false; 
-           break;
-        }
+            valid = false;
+            break;
+       }
     }
     return valid;
 }

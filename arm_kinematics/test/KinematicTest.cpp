@@ -6,10 +6,13 @@ int main(int argc, const char *argv[])
     KR6ArmKinematics kinematics;
 
     JointValues jv;
+    jv(0) = -M_PI/2;
     JointValues sol;
     Vector3d pos = kinematics.solveFK(jv);
     Vector3d pos1;
     Vector3d orient;
+    orient(2) = M_PI/2;
+    std::cout << orient(2) << std::endl;
     Pose pose;
     pose.position = pos;
     pose.orientation = orient;
