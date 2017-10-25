@@ -29,11 +29,20 @@ void Manipulator::moveArm(const JointValues & jointValues)
 }
 void Manipulator::moveArm(const Pose & pose, const std::vector<double> & configuration)
 {
-    brics_actuator::JointPositions jointPositions;
     JointValues jointAngles;
     
+    // All configurations for manipulator
+    std::vector<std::vector<double>> config = {{0, 1, 1}, {0, 1, -1}, {0, -1, 1}, {0, -1, -1}, 
+        {M_PI, 1, 1}, {M_PI, 1, -1}, {M_PI, -1, 1}, {M_PI, -1, -1}};
+
     if (solver.solveIK(pose, configuration, jointAngles)) {
         moveArm(jointAngles);
+    }
+
+    // If solution not found, find first avalible solution
+    for (size_t i = 0; i < config.size(); ++i) {
+        if (solver.solveIK(pose, config[i], jointAngles))
+            moveArm(jointAngles);
     }
 }
 
