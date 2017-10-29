@@ -88,6 +88,8 @@ class PaleteFinder:
         cv2.imshow("thresh", thresh)
         cv2.waitKey(0)
 
+        cv2.destroyAllWindows()
+
         rate = rospy.Rate(self.freq)     # freq [hz]
         while not rospy.is_shutdown():
             self.palettePub.publish(paletteMsg)
@@ -117,8 +119,6 @@ def main():
         rospy.spin()
     except CvBridgeError as e:
         print(e);
-
-    cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     main()
