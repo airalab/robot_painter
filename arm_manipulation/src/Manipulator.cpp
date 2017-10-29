@@ -37,12 +37,15 @@ void Manipulator::moveArm(const Pose & pose, const std::vector<double> & configu
 
     if (solver.solveIK(pose, configuration, jointAngles)) {
         moveArm(jointAngles);
+        return;
     }
 
     // If solution not found, find first avalible solution
     for (size_t i = 0; i < config.size(); ++i) {
-        if (solver.solveIK(pose, config[i], jointAngles))
+        if (solver.solveIK(pose, config[i], jointAngles)) {
             moveArm(jointAngles);
+            return;
+        }
     }
 }
 
