@@ -4,18 +4,19 @@
 int main(int argc, const char *argv[])
 {
     KR6ArmKinematics kinematics;
-
     JointValues jv;
-    jv(0) = -M_PI/2;
-    JointValues sol;
+    jv(1) = -M_PI/2;
+    jv(2) = M_PI/2;
+
     Vector3d pos = kinematics.solveFK(jv);
-    Vector3d pos1;
     Vector3d orient;
-    orient(2) = M_PI/2;
-    std::cout << orient(2) << std::endl;
     Pose pose;
     pose.position = pos;
     pose.orientation = orient;
+
+    Vector3d pos1;
+    JointValues sol;
+
     std::vector<std::vector<double>> config = {{0, 1, 1}, {0, 1, -1}, {0, -1, 1}, {0, -1, -1}, 
         {M_PI, 1, 1}, {M_PI, 1, -1}, {M_PI, -1, 1}, {M_PI, -1, -1}};
                                              

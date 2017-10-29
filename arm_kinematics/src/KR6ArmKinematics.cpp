@@ -40,7 +40,7 @@ bool KR6ArmKinematics::solveIK(const Pose & pose, const std::vector<double> & co
     pos(1) -= d5*rotMatrix(1,0);
     pos(2) -= d5*rotMatrix(2,0);
 
-    std::cout << "pos: (" << pos(0) << ", " << pos(1) << ")" << std::endl;
+    // std::cout << "pos: (" << pos(0) << ", " << pos(1) << ")" << std::endl;
 
     q1 = atan2(-pos(1), pos(0)); // plus/minus pi
     if (configuration[0] != 0) {
@@ -70,6 +70,7 @@ bool KR6ArmKinematics::solveIK(const Pose & pose, const std::vector<double> & co
     q2 = atan2(-planePos(2), planePos(0)) - atan2(d*sin(ang), d2 + d*cos(ang));
     
 
+    // TODO check orientation solution
     // Rotation solution
     q4 = atan2(rotMatrix(0,0)*sin(q1) + rotMatrix(1,0)*cos(q1), 
         rotMatrix(0,0)*sin(q2+q3)*cos(q1) - rotMatrix(1,0)*sin(q1)*sin(q2+q3) + rotMatrix(2, 0)*cos(q2+q3));
@@ -77,8 +78,8 @@ bool KR6ArmKinematics::solveIK(const Pose & pose, const std::vector<double> & co
     cosq5 = rotMatrix(0,0)*cos(q1)*cos(q2+q3) - rotMatrix(1,0)*sin(q1)*cos(q2+q3) - rotMatrix(2, 0)*sin(q2+q3);
     q5 = configuration[2]*atan2(sqrt(1 - cosq5*cosq5), cosq5); // plus/minus
 
-    q6 = atan2(rotMatrix(0,1)*cos(q1)*cos(q2+q3) - rotMatrix(1,1)*sin(q1)*cos(q2+q3) - rotMatrix(2,1)*sin(q2+q3),
-        rotMatrix(0,1)*cos(q1)*cos(q2+q3) - rotMatrix(1,1)*sin(q1)*cos(q2+q3) - rotMatrix(2,1)*sin(q2+q3));
+    q6 = atan2(rotMatrix(0,1)*cos(q1)*cos(q2 + q3) - rotMatrix(1,1)*sin(q1)*cos(q2 + q3) - rotMatrix(2,1)*sin(q2 + q3),
+        rotMatrix(0,2)*cos(q1)*cos(q2 + q3) + rotMatrix(1,2)*sin(q1)*cos(q2 + q3) + rotMatrix(2,2)*sin(q2 + q3));
 
     solution(0) = q1; solution(1) = q2; solution(2) = q3; solution(3) = q4; solution(4) = q5; solution(5) = q6;
 
