@@ -4,9 +4,9 @@
 #include <ros/ros.h>
 #include <string>
 
+#include <sensor_msgs/JointState.h>
 #include <brics_actuator/JointPositions.h>
 #include <arm_kinematics/KR6ArmKinematics.h>
-
 
 // Message generation
 brics_actuator::JointPositions createArmPositionMsg(std::string prefix, JointValues jointAngles);
@@ -19,10 +19,12 @@ class Manipulator
 
         void initArmTopics();
 
-        void moveArm(const JointValues & jointValues);
-        void moveArm(const Pose & pose, const std::vector<double> & configuration);
+        bool moveArm(const JointValues & jointValues);
+        bool moveArm(const Pose & pose, const std::vector<double> & configuration);
 
     private:
+        void stateCallback(const sensor_msgs::JointStatePtr & msg);
+
         ros::NodeHandle nh;
 
         // Kinematic solver
@@ -30,8 +32,10 @@ class Manipulator
 
         // Publishers
         ros::Publisher armPublisher;
+        ros::Subscriber jointStateSubscriber;
 
         std::string jointPrefix;
+        JointValues jointState;
 
 };
 
