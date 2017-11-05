@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
     brics_actuator
     roscpp
     sensor_msgs
+    brics_actuator
 )
 
 ## System dependencies are found with CMake's conventions
