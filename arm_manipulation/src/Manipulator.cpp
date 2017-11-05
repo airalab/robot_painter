@@ -40,7 +40,7 @@ bool Manipulator::moveArm(const JointValues & jointValues)
             }
         } while(check && nh.ok());
         diff = jointState - jointValues;
-    } while(diff.norm() > 0.1 && nh.ok());
+    } while(diff.norm() > 0.01 && nh.ok());
 
     return true;
 }
