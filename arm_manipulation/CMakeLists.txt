@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
     roscpp
     sensor_msgs
     brics_actuator
+	kuka_kr6_support
 )
 
 ## System dependencies are found with CMake's conventions

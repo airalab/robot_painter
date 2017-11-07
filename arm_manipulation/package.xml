@@ -50,6 +50,7 @@
   <run_depend>roscpp</run_depend>
   <run_depend>sensor_msgs</run_depend>
   <run_depend>brics_actuator</run_depend>
+  <run_depend>kuka_kr6_support</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
