@@ -7,6 +7,7 @@ Created on Wed Oct 18 15:46:41 2017
 """
 import roslib
 import rospy
+import tf2_ros
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
 from kuka_cv.msg import Palette
@@ -30,12 +31,13 @@ class PaleteFinder:
         self.height = resolution[1]         # camera resolution [px]
         self.dx = vectorOfCamera[0]         # camera in manipulator frame [m]
         self.dy = vectorOfCamera[1]         # camera in manipulator frame [m]
+        self.dz = vectorOfCamera[2]         # camera in manipulator frame [m]
         self.kx = scaleFactor[0]            # scale factor [m/px]
         self.ky = scaleFactor[1]            # scale factor [m/px]
 
     def coordTransform(self, x, y, z):
-        newX = (-x + self.width/2)*self.kx + self.dx
-        newY = (-y + self.height/2)*self.ky + self.dy
+        newX = (-y + self.width/2)*self.kx + self.dx
+        newY = (-x + self.height/2)*self.ky + self.dy
         newZ = z
         return [round(newX, 4), round(newY, 4), newZ]
 
@@ -70,7 +72,7 @@ class PaleteFinder:
             cy = int(M['m01']/M['m00'])
             paleteColor = img[cy, cx]
 
-            coord = self.coordTransform(cx, cy, 0)
+            coord = self.coordTransform(cx, cy, self.dz)
 
             colourMsg = Colour()
             colourMsg.position = coord
@@ -108,9 +110,31 @@ def main():
     After that by output data compute scale factor and set vector of camera.     
     """
 
+    tfBuffer = tf2_ros.Buffer()
+    listener = tf2_ros.TransformListener(tfBuffer)
+
+    tempRate = rospy.Rate(10)
+    while not rospy.is_shutdown():
+        try:
+            trans = tfBuffer.lookup_transform("base_link", "link_6", rospy.Time())
+            print(trans.transform.translation)
+            break
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+            tempRate.sleep()
+            continue
+
+    # TODO add camera offsets
+    cameraPosition = trans.transform.translation;
+    cameraOffset = [0.1, 0, 0]
+    vectorOfCamera = [cameraPosition.x, cameraPosition.y + cameraOffset[0], cameraPosition.z]
+
+    # TODO calculate scale factor, add function to calibration
+    diffPaintDistanceM = [0.05, 0.014]                              # Distance between paints [m]
+    diffPaintDistancePX = [67, 17]                                  # Distance between paints [px]
+    scaleFactor = [diffPaintDistanceM[0]/diffPaintDistancePX[0],
+                   diffPaintDistanceM[1]/diffPaintDistancePX[1]]    # Scale factor [m/px]
+
     resolution = [1280, 720]
-    vectorOfCamera = [0.0925, 0.5]
-    scaleFactor = [0.014/16, 0.05/57]
     paletteThresh = 230
     freq = 10
 
