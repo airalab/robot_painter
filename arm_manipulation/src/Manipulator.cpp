@@ -12,7 +12,7 @@ void Manipulator::initArmTopics()
     ROS_INFO_STREAM("[AM] Load topics ...");
     ROS_INFO_STREAM("[AM] Publisher: /kuka_arm/arm_controller/position_command" << "\n");
     armPublisher = nh.advertise<brics_actuator::JointPositions> ("/kuka_arm/arm_controller/position_command", 1);
-    jointStateSubscriber = nh.subscribe("/JointState", 10, &Manipulator::stateCallback, this);
+    jointStateSubscriber = nh.subscribe("/joint_states", 10, &Manipulator::stateCallback, this);
     ros::Duration(1).sleep();
 }
 
