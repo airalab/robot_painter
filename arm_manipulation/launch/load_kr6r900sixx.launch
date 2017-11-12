@@ -5,6 +5,6 @@
 	<include file="$(find kuka_kr6_support)/launch/load_kr6r900sixx.launch" />
 
 	<node name="camera_transform_broadcaster" pkg="kuka_cv" type="CameraTransformBroadcaster.py" output="screen">
-		<rosparam param="camera_positon">[0, 0, 0.1]</rosparam>
+		<rosparam param="camera_positon">[0.0625, 0, 0]</rosparam>
 	</node>
 </launch>
