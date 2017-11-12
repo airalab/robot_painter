@@ -6,6 +6,7 @@ import tf
 import tf2_ros
 
 import geometry_msgs.msg
+import tf2_msgs.msg
 
 rospy.init_node("camera_transform_broadcaster")
 
@@ -14,12 +15,11 @@ x, y, z = cameraPos[0], cameraPos[1], cameraPos[2]
 print("Camera position: " + str(x) + ", " 
 	+ str(y) + ", " + str(z))
 
-br = tf2_ros.TransformBroadcaster()
+br = tf2_ros.StaticTransformBroadcaster()
 t = geometry_msgs.msg.TransformStamped()
 
-t.header.stamp = rospy.Time.now()
-t.header.frame_id = "base_link"
-t.child_frame_id = "camera_link"
+t.header.frame_id = "/link_6"
+t.child_frame_id = "/camera_link"
 t.transform.translation.x = x
 t.transform.translation.y = y
 t.transform.translation.z = z
@@ -29,5 +29,8 @@ t.transform.rotation.y = q[1]
 t.transform.rotation.z = q[2]
 t.transform.rotation.w = q[3]
 
+rate = rospy.Rate(10.0)
 while not rospy.is_shutdown():
+	t.header.stamp = rospy.Time.now()
 	br.sendTransform(t)
+	rate.sleep()
