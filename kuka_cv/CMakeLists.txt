@@ -7,7 +7,7 @@ project(kuka_cv)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED rospy roslib sensor_msgs message_generation)
+find_package(catkin REQUIRED rospy roslib sensor_msgs geometry_msgs message_generation)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -53,6 +53,7 @@ add_message_files(
 add_service_files(
   FILES
   RequestPalette.srv
+  RequestCanvas.srv
   SetMode.srv
 )
 
@@ -66,6 +67,7 @@ add_service_files(
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
+  geometry_msgs
 )
 
 ################################################
