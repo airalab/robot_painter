@@ -15,29 +15,43 @@ from cv_bridge import CvBridge, CvBridgeError
 
 # Messages
 from sensor_msgs.msg import Image
+from geometry_msgs.msg import Transform
 from kuka_cv.msg import Palette
 from kuka_cv.msg import Colour
+from kuka_cv.srv import RequestPalette, RequestPaletteResponse
+from kuka_cv.srv import RequestCanvas, RequestCanvasResponse
 from kuka_cv.srv import SetMode, SetModeResponse
+
+# Othre
+import numpy as np
 
 
 ### TODO add class for image processing
 class ImageProcessing:
-    def __init__(self, resolution, scaleFactor, tresh, baseFrameName, cameraFrameName):
+    def __init__(self, resolution, scaleFactor, tresh, baseFrameName, cameraFrameName, freq):
+        self.bridge = CvBridge();
+
         # OpenCV settings
         self.font = cv2.FONT_HERSHEY_COMPLEX_SMALL
         self.paletteThresh = tresh[0]   # Colour value of threshold for palette [0 - 255]
-        self.canvasThres = tresh[1]     # Colour value of threshold for canvas [0 - 255]
+        self.canvasThresh = tresh[1]    # Colour value of threshold for canvas [0 - 255]
         self.mode = 0                   # Mode of image processing
 
         # ROS API
-        self.imageSub = rospy.Subscriber("/Camera", Image, imageCallback)
-        self.palettePub = rospy.Publisher("/Palette", Palette, queue_size=10)
-        self.modeService = rospy.Service("/SetPaleteDetectionMode", SetMode, setModeByService)
-        self.freq = 10                  # Frquency of message sinding [hz]
-        self.dataOutput = False
+        self.imageSub = rospy.Subscriber("/Camera", Image, self.imageCallback)
+        self.paletteService = rospy.Service("/request_palette", RequestPalette, self.sendPaletteInfo)
+        self.canvasService = rospy.Service("/request_canvas", RequestCanvas, self.sendCanvasInfo)
+        self.modeService = rospy.Service("/SetPaleteDetectionMode", SetMode, self.setModeByService)
+        self.freq = freq                # Frquency of message sinding [hz]
+        self.rate = rospy.Rate(self.freq)
+        self.computeImage = False
 
         # Enviroment information
         self.paletteMsg = Palette()
+        self.canvasTranform = Transform()
+        self.canvasW = 0
+        self.canvasH = 0
+        self.canvasRot = 0
 
         # Frame Transformations; Need to set object vector
         self.transformer = CameraTransformations(resolution, scaleFactor, baseFrameName, cameraFrameName)
@@ -52,8 +66,9 @@ class ImageProcessing:
         return True
 
     ### Common Image Processing
-    def imageProcessing(self, img, grayimg):
+    def imageProcessing(self, data):
         # Get camera position and orientation
+        print("Get current frame information.")
         self.transformer.getCameraFrame()
         try:
             img = self.bridge.imgmsg_to_cv2(data, "bgr8")
@@ -64,13 +79,20 @@ class ImageProcessing:
         grayimg = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         grayimg = cv2.medianBlur(grayimg, 5) # 5 - kernel size
 
-        if (self.mode == 1 and not dataOutput):
-            detectPalette()
-        if (self.mode == 2 and not dataOutput):
-            detectCanvas()
+        if (self.mode == 1):
+            print("[CV] Detect plete!")
+            self.paletteMsg = Palette()
+            self.detectPalette(img, grayimg)
+            self.computeImage = False
+            return
+        if (self.mode == 2):
+            print("[CV] Detect canvas!")
+            self.detectCanvas(img, grayimg)
+            self.computeImage = False
+            return
 
     def detectPalette(self, img, grayimg):
-        ret, thresh = cv2.threshold(grayimg, 230, 255, 0)
+        ret, thresh = cv2.threshold(grayimg, self.paletteThresh, 255, 0)
         image, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, 
                                                     cv2.CHAIN_APPROX_SIMPLE)
         # hierarchy -- [Next, Previous, First_Child, Parent]
@@ -84,25 +106,24 @@ class ImageProcessing:
         img = cv2.drawContours(img, contours, -1, (0,0,0), 4)
 
         # Find center of mass and color
-        self.paletteMsg = Palette() 
+        # TODO try to use cv2.mean(image, mask)
         for cnt in contours:
             M = cv2.moments(cnt)
             cx = int(M['m10']/M['m00'])
             cy = int(M['m01']/M['m00'])
             paleteColor = img[cy, cx]
-
-            coord = self.coordTransform(cx, cy, self.dz)
+            # TODO Add z coordinate as param
+            coord = self.transformer.coordTransform(cx, cy, 0)
 
             colourMsg = Colour()
-            colourMsg.position = coord
+            colourMsg.position = [coord[0], coord[1], coord[2]]
             colourMsg.bgr = [paleteColor[0], paleteColor[1], paleteColor[2]]
 
-            text = "(" + str(coord[0]) + ", " + str(coord[1]) + ")"
+            text = "(" + str(round(coord[3], 3)) + ", " + str(round(coord[4], 3)) + ")"
             cv2.putText(img, text, (cx, cy), self.font, 1, (0,0,255), 1, cv2.LINE_AA)
             # cv2.circle(img, (cx, cy), 4, (0,0,0), -1)
 
             self.paletteMsg.colours.append(colourMsg)
-            self.dataOutput = True
 
         print(self.paletteMsg)
 
@@ -113,64 +134,103 @@ class ImageProcessing:
         cv2.destroyAllWindows()
 
     def detectCanvas(self, img, grayimg):
-        # Do somethin
-        pass
+        # Get camera position and orientation
+        print("Get current frame information.")
+        self.transformer.getCameraFrame()
+
+        ret, thresh = cv2.threshold(grayimg, self.canvasThresh, 255, 0)
+        image, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE,
+                                                    cv2.CHAIN_APPROX_SIMPLE)
+        rect = cv2.minAreaRect(contours[0])
+        box = cv2.boxPoints(rect)
+        cx, cy = np.int0(rect[0])
+        w, h = np.int0(rect[1])
+
+        ang = -rect[2]              # Angle between vector x and canvas TODO check angle
+        if (abs(ang - 2) > 45):
+            ang = 90 - np.sign(ang)*ang
+
+        print("angle: " + str(ang))
+        coord = self.transformer.coordTransform(cx, cy, 0)      # TODO add Z
+        q1 = tf.transformations.quaternion_from_euler(0, 0, ang)
+        q2 = self.transformer.q
+        q = tf.transformations.quaternion_multiply(q1, q2)
+
+
+        self.canvasTranform.translation.x = coord[0]
+        self.canvasTranform.translation.y = coord[1]
+        self.canvasTranform.translation.z = coord[2]
+        self.canvasTranform.rotation.x = q[0]
+        self.canvasTranform.rotation.y = q[1]
+        self.canvasTranform.rotation.z = q[2]
+        self.canvasTranform.rotation.w = q[3]
+        self.canvasW = np.sqrt((w*np.sin(ang)*self.transformer.kx)**2 + (w*np.cos(ang)*self.transformer.ky)**2)
+        self.canvasH = np.sqrt((h*np.cos(ang)*self.transformer.kx)**2 + (h*np.sin(ang)*self.transformer.ky)**2)
+
+        # Draw all contours
+        img = cv2.drawContours(img, contours, -1, (0,0,0), 4)
+
+        cv2.imshow("Raw", img)
+        cv2.imshow("thresh", thresh)
+        cv2.waitKey(0)
+
+        cv2.destroyAllWindows()
 
     ### Callbacks
     def setModeByService(self, req):
-        try: 
+        try:
+            self.computeImage = True
             resposnse = SetModeResponse(self.setMode(req.mode))
+            if resposnse:
+                print("Set mode: " + str(self.mode))
+            else:
+                print("Error: mode is not set")
+
         except Exception:
             print("Exception")
         return resposnse
 
+    def sendPaletteInfo(self, req):
+        resp = RequestPaletteResponse()
+        resp.colours = self.paletteMsg.colours
+        return resp
+
+    def sendCanvasInfo(self, req):
+        resp = RequestCanvasResponse()
+        resp.trans = self.canvasTranform
+        resp.width = self.canvasW
+        resp.height = self.canvasH
+        return resp
+
 
     def imageCallback(self, data):
-        if self.mode = 0:
+        if self.mode == 0:
             return
 
-        if not self.dataOutput:
-            imageProcessing()
+        if self.computeImage:
+            print("Image Prosessing start.")
+            self.imageProcessing(data)
             return
 
-        if mode == 1 and self.dataOutput:
-            self.palettePub.publish(self.paletteMsg)
-
-        self.rate.sleep()
-
-
-
-
-def callback(data):
+        self.rate.sleep() # TODO delete rate
 
 
 def main():
     rospy.init_node("kuka_cv")
-
-    imageSub = rospy.Subscriber("/Camera", Image, imageCallback)
-    palettePub = rospy.Publisher("/Palette", Palette, queue_size=10)
-    modeService = rospy.Service("/SetPaleteDetectionMode", SetMode, setModeByService)
 
     # TODO add calibration mode
     calibration = True
 
     """
     If you don't know vector of camera relatibe manipulator frame set:
-        
-        cameraPosition.x = 0
-        cameraPosition.y = 0
-        cameraPosition.z = 0
-        cameraOrientation.x = 0
-        cameraOrientation.y = 0
-        cameraOrientation.z = 0
-        cameraOrientation.w = 1
+
         scaleFactor = [1, 1]
 
     After that by output data compute scale factor and set vector of camera.     
     """
 
     # TODO calculate scale factor, add function to calibration
-    diffPaintDistanceM = [0.05, -0.012]                             # Distance between paints [m]
+    diffPaintDistanceM = [0.0501, -0.013]                           # Distance between paints [m]
     diffPaintDistancePX = [66, -17]                                 # Distance between paints [px]
     scaleFactor = [diffPaintDistanceM[0]/diffPaintDistancePX[0],
                    diffPaintDistanceM[1]/diffPaintDistancePX[1]]    # Scale factor [m/px]
@@ -182,6 +242,8 @@ def main():
 
     # TODO detection
     print("Waiting for set mode service.")
+    imageProcessor = ImageProcessing(resolution, scaleFactor, thresholds, "base_link", "camera_link", freq)
+
     try:
         rospy.spin()
     except CvBridgeError as e:
