@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-  <include file="$(find arm_manipulation)/launch/load_kr6r900sixx.launch" />
+<!--   <include file="$(find arm_manipulation)/launch/load_kr6r900sixx.launch" /> -->
   <node name="kuka_cv" pkg="kuka_cv" type="StartCV.py"/>
   <node name="camera_test" pkg="local_task_planner" type="camera_test" output="screen"/>
 </launch>

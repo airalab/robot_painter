@@ -87,11 +87,13 @@ class ImageProcessing:
             return
         if (self.mode == 2):
             print("[CV] Detect canvas!")
+            self.canvasTranform = Transform()
             self.detectCanvas(img, grayimg)
             self.computeImage = False
             return
 
     def detectPalette(self, img, grayimg):
+        msg = Palette()
         ret, thresh = cv2.threshold(grayimg, self.paletteThresh, 255, 0)
         image, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, 
                                                     cv2.CHAIN_APPROX_SIMPLE)
@@ -123,15 +125,16 @@ class ImageProcessing:
             cv2.putText(img, text, (cx, cy), self.font, 1, (0,0,255), 1, cv2.LINE_AA)
             # cv2.circle(img, (cx, cy), 4, (0,0,0), -1)
 
-            self.paletteMsg.colours.append(colourMsg)
-
-        print(self.paletteMsg)
+            msg.colours.append(colourMsg)
 
         cv2.imshow("Raw", img)
         cv2.imshow("thresh", thresh)
         cv2.waitKey(0)
 
         cv2.destroyAllWindows()
+
+        self.paletteMsg = msg
+        print(self.paletteMsg)
 
     def detectCanvas(self, img, grayimg):
         # Get camera position and orientation
@@ -156,6 +159,14 @@ class ImageProcessing:
         q2 = self.transformer.q
         q = tf.transformations.quaternion_multiply(q1, q2)
 
+        # Draw all contours
+        img = cv2.drawContours(img, contours, -1, (0,0,0), 4)
+
+        cv2.imshow("Raw", img)
+        cv2.imshow("thresh", thresh)
+        cv2.waitKey(0)
+
+        cv2.destroyAllWindows()
 
         self.canvasTranform.translation.x = coord[0]
         self.canvasTranform.translation.y = coord[1]
@@ -166,15 +177,6 @@ class ImageProcessing:
         self.canvasTranform.rotation.w = q[3]
         self.canvasW = np.sqrt((w*np.sin(ang)*self.transformer.kx)**2 + (w*np.cos(ang)*self.transformer.ky)**2)
         self.canvasH = np.sqrt((h*np.cos(ang)*self.transformer.kx)**2 + (h*np.sin(ang)*self.transformer.ky)**2)
-
-        # Draw all contours
-        img = cv2.drawContours(img, contours, -1, (0,0,0), 4)
-
-        cv2.imshow("Raw", img)
-        cv2.imshow("thresh", thresh)
-        cv2.waitKey(0)
-
-        cv2.destroyAllWindows()
 
     ### Callbacks
     def setModeByService(self, req):
@@ -192,11 +194,22 @@ class ImageProcessing:
 
     def sendPaletteInfo(self, req):
         resp = RequestPaletteResponse()
+        while len(self.paletteMsg.colours) == 0:
+            self.rate.sleep()
         resp.colours = self.paletteMsg.colours
         return resp
 
     def sendCanvasInfo(self, req):
         resp = RequestCanvasResponse()
+        check = (self.canvasTranform.translation.x == 0
+            and self.canvasTranform.translation.y == 0
+            and self.canvasTranform.translation.z == 0)
+        while (check):
+            check = (self.canvasTranform.translation.x == 0
+                and self.canvasTranform.translation.y == 0
+                and self.canvasTranform.translation.z == 0)
+            self.rate.sleep()
+
         resp.trans = self.canvasTranform
         resp.width = self.canvasW
         resp.height = self.canvasH
