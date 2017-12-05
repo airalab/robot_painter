@@ -80,7 +80,7 @@ class ImageProcessing:
         grayimg = cv2.medianBlur(grayimg, 5) # 5 - kernel size
 
         if (self.mode == 1):
-            print("[CV] Detect plete!")
+            print("[CV] Detect plette!")
             self.paletteMsg = Palette()
             self.detectPalette(img, grayimg)
             self.computeImage = False
@@ -158,6 +158,7 @@ class ImageProcessing:
         q1 = tf.transformations.quaternion_from_euler(0, 0, ang)
         q2 = self.transformer.q
         q = tf.transformations.quaternion_multiply(q1, q2)
+        print("q1: " + str(q1))
 
         # Draw all contours
         img = cv2.drawContours(img, contours, -1, (0,0,0), 4)
