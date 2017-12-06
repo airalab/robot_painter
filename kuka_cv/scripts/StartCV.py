@@ -69,7 +69,6 @@ class ImageProcessing:
     def imageProcessing(self, data):
         # Get camera position and orientation
         print("Get current frame information.")
-        self.transformer.getCameraFrame()
         try:
             img = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
@@ -79,17 +78,14 @@ class ImageProcessing:
         grayimg = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         grayimg = cv2.medianBlur(grayimg, 5) # 5 - kernel size
 
+        self.computeImage = False
         if (self.mode == 1):
             print("[CV] Detect plette!")
-            self.paletteMsg = Palette()
             self.detectPalette(img, grayimg)
-            self.computeImage = False
             return
         if (self.mode == 2):
             print("[CV] Detect canvas!")
-            self.canvasTranform = Transform()
             self.detectCanvas(img, grayimg)
-            self.computeImage = False
             return
 
     def detectPalette(self, img, grayimg):
@@ -109,6 +105,7 @@ class ImageProcessing:
 
         # Find center of mass and color
         # TODO try to use cv2.mean(image, mask)
+        self.transformer.getCameraFrame()
         for cnt in contours:
             M = cv2.moments(cnt)
             cx = int(M['m10']/M['m00'])
@@ -191,10 +188,18 @@ class ImageProcessing:
 
         except Exception:
             print("Exception")
-        return resposnse
+
+        if (self.mode == 1):
+            self.paletteMsg = Palette()
+            return resposnse
+        if (self.mode == 2):
+            print("[CV] Detect canvas!")
+            self.canvasTranform = Transform()
+            return resposnse
 
     def sendPaletteInfo(self, req):
         resp = RequestPaletteResponse()
+        print(self.paletteMsg)
         while len(self.paletteMsg.colours) == 0:
             self.rate.sleep()
         resp.colours = self.paletteMsg.colours
