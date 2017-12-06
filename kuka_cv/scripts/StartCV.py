@@ -28,7 +28,7 @@ import numpy as np
 
 ### TODO add class for image processing
 class ImageProcessing:
-    def __init__(self, resolution, scaleFactor, tresh, baseFrameName, cameraFrameName, freq):
+    def __init__(self, resolution, scaleFactor, tresh, baseFrameName, cameraFrameName, heights, freq):
         self.bridge = CvBridge();
 
         # OpenCV settings
@@ -52,6 +52,8 @@ class ImageProcessing:
         self.canvasW = 0
         self.canvasH = 0
         self.canvasRot = 0
+        self.heightToPalette = heights[0]   # Absolute value
+        self.heightToCanvas = heights[1]    # Absolute value
 
         # Frame Transformations; Need to set object vector
         self.transformer = CameraTransformations(resolution, scaleFactor, baseFrameName, cameraFrameName)
@@ -69,6 +71,7 @@ class ImageProcessing:
     def imageProcessing(self, data):
         # Get camera position and orientation
         print("Get current frame information.")
+        self.transformer.getCameraFrame()
         try:
             img = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
@@ -105,14 +108,14 @@ class ImageProcessing:
 
         # Find center of mass and color
         # TODO try to use cv2.mean(image, mask)
-        self.transformer.getCameraFrame()
         for cnt in contours:
             M = cv2.moments(cnt)
             cx = int(M['m10']/M['m00'])
             cy = int(M['m01']/M['m00'])
             paleteColor = img[cy, cx]
-            # TODO Add z coordinate as param
-            coord = self.transformer.coordTransform(cx, cy, 0)
+
+            z = -self.heightToPalette + 0 # 0 - height of paint. TODO add height of paint
+            coord = self.transformer.coordTransform(cx, cy, z)
 
             colourMsg = Colour()
             colourMsg.position = [coord[0], coord[1], coord[2]]
@@ -134,9 +137,6 @@ class ImageProcessing:
         print(self.paletteMsg)
 
     def detectCanvas(self, img, grayimg):
-        # Get camera position and orientation
-        print("Get current frame information.")
-        self.transformer.getCameraFrame()
 
         ret, thresh = cv2.threshold(grayimg, self.canvasThresh, 255, 0)
         image, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE,
@@ -146,15 +146,18 @@ class ImageProcessing:
         cx, cy = np.int0(rect[0])
         w, h = np.int0(rect[1])
 
-        ang = -rect[2]              # Angle between vector x and canvas TODO check angle
+        ang = 90 + rect[2]      # Angle between vector x and canvas TODO check angle
+        print(ang)
         if (abs(ang - 2) > 45):
-            ang = 90 - np.sign(ang)*ang
+            ang = np.sign(ang)*ang - 90
 
-        print("angle: " + str(ang))
-        coord = self.transformer.coordTransform(cx, cy, 0)      # TODO add Z
+        ang = ang * np.pi/180
+        coord = self.transformer.coordTransform(cx, cy, -self.heightToCanvas)
         q1 = tf.transformations.quaternion_from_euler(0, 0, ang)
         q2 = self.transformer.q
         q = tf.transformations.quaternion_multiply(q1, q2)
+        print("Raw angle :" + str(rect[2]))
+        print("angle: " + str(ang))
         print("q1: " + str(q1))
 
         # Draw all contours
@@ -244,6 +247,7 @@ def main():
     If you don't know vector of camera relatibe manipulator frame set:
 
         scaleFactor = [1, 1]
+        heights = [0, 0]
 
     After that by output data compute scale factor and set vector of camera.     
     """
@@ -253,6 +257,7 @@ def main():
     diffPaintDistancePX = [66, -17]                                 # Distance between paints [px]
     scaleFactor = [diffPaintDistanceM[0]/diffPaintDistancePX[0],
                    diffPaintDistanceM[1]/diffPaintDistancePX[1]]    # Scale factor [m/px]
+    heights = [0.85, 0.85]
 
     # TODO add automatic calc of resolution
     resolution = [1280, 720]
@@ -261,7 +266,7 @@ def main():
 
     # TODO detection
     print("Waiting for set mode service.")
-    imageProcessor = ImageProcessing(resolution, scaleFactor, thresholds, "base_link", "camera_link", freq)
+    imageProcessor = ImageProcessing(resolution, scaleFactor, thresholds, "base_link", "camera_link", heights, freq)
 
     try:
         rospy.spin()

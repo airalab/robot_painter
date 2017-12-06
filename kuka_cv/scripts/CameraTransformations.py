@@ -41,7 +41,7 @@ class CameraTransformations:
         # Rotate camera frame to base frame (base_link)
         newX = self.rot[0, 0]*x1 + self.rot[0, 1]*y1 + self.rot[0, 2]*z1 + self.dx
         newY = self.rot[1, 0]*x1 + self.rot[1, 1]*y1 + self.rot[1, 2]*z1 + self.dy
-        newZ = self.rot[2, 0]*x1 + self.rot[2, 1]*y1 + self.rot[2, 2]*z1
+        newZ = self.rot[2, 0]*x1 + self.rot[2, 1]*y1 + self.rot[2, 2]*z1 + self.dz
 
         return [newX, newY, newZ, x1, y1, z1]
 
@@ -64,4 +64,3 @@ class CameraTransformations:
         self.dy = pos.y
         self.dz = pos.z
         self.rot = tf.transformations.quaternion_matrix(self.q)
-
