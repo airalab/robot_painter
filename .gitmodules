@@ -1,3 +1,6 @@
 [submodule "kuka_experimental"]
 	path = kuka_experimental
 	url = https://github.com/AlexeiOvcharov/kuka_experimental
+[submodule "Picture-PreProcessing"]
+	path = Picture-PreProcessing
+	url = git@github.com:AlexeiOvcharov/Picture-PreProcessing.git
