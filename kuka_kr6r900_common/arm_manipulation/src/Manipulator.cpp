@@ -1,4 +1,5 @@
 #include "arm_manipulation/Manipulator.h"
+#define MANIPULATION_DEBUG false 
 
 Manipulator::Manipulator(std::string prefix, ros::NodeHandle & nodeHandle)
     :nh(nodeHandle), jointPrefix(prefix)
@@ -25,7 +26,9 @@ bool Manipulator::moveArm(const JointValues & jointValues)
 
     brics_actuator::JointPositions jointPositions = createArmPositionMsg(jointPrefix, jointValues);
     
-    ROS_INFO_STREAM("[AM] Move to pose.");
+    if (MANIPULATION_DEBUG)
+        ROS_INFO_STREAM("[AM] Move to pose.");
+
     armPublisher.publish(jointPositions);
 
     JointValues diff;
@@ -53,7 +56,6 @@ bool Manipulator::moveArm(const Pose & pose, const std::vector<double> & configu
         {M_PI, 1, 1}, {M_PI, 1, -1}, {M_PI, -1, 1}, {M_PI, -1, -1}};
 
     if (solver.solveIK(pose, configuration, jointAngles)) {
-        moveArm(jointAngles);
         return moveArm(jointAngles);
     }
 
@@ -63,6 +65,11 @@ bool Manipulator::moveArm(const Pose & pose, const std::vector<double> & configu
             return moveArm(jointAngles);
         }
     }
+
+    ROS_ERROR_STREAM("[AM] Solution for pose (" 
+        << pose.position(0) << ", "
+        << pose.position(1) << ", " 
+        << pose.position(2) << ") is NOT FOND");
 }
 
 void Manipulator::stateCallback(const sensor_msgs::JointStatePtr & msg) {

@@ -1,5 +1,6 @@
 #include "arm_kinematics/KR6ArmKinematics.h"
 #include <iostream>
+#define KINEMATIC_DEBUG false
 
 Vector3d KR6ArmKinematics::solveFK(const JointValues & jointValues) {
  
@@ -24,7 +25,8 @@ Vector3d KR6ArmKinematics::solveFK(const JointValues & jointValues) {
 bool KR6ArmKinematics::solveIK(const Pose & pose, const std::vector<double> & configuration, JointValues & solution) {
 
     if (configuration.size() != 3) {
-        std::cerr << "Invalid configuration paramters, array size" << configuration.size() << std::endl;
+        if (KINEMATIC_DEBUG)
+            std::cerr << "Invalid configuration paramters, array size" << configuration.size() << std::endl;
         return false;
     }
 
@@ -47,7 +49,8 @@ bool KR6ArmKinematics::solveIK(const Pose & pose, const std::vector<double> & co
         if (q1 > M_PI + minJointAngles[0]) q1 -= configuration[0];
         else if (q1 < maxJointAngles[0] - M_PI) q1 += configuration[0];
         else {
-            std::cerr << "Solution with configuration: (" << configuration[0] << ", " << configuration[1] << ", " << configuration[2] << ") is NOT exist." << std::endl;
+            if (KINEMATIC_DEBUG)
+                std::cerr << "Solution with configuration: (" << configuration[0] << ", " << configuration[1] << ", " << configuration[2] << ") is NOT exist." << std::endl;
             return false;
         }
     }
@@ -61,7 +64,8 @@ bool KR6ArmKinematics::solveIK(const Pose & pose, const std::vector<double> & co
     cosAng = (planePos(0)*planePos(0) + planePos(2)*planePos(2) - d2*d2 - d*d)/(2*d2*d);
 
     if (cosAng > 1) {
-        std::cerr << "Solution with configuration: (" << configuration[0] << ", " << configuration[1] << ", " << configuration[2] << ") is NOT exist. Cosine of angle > 1." << std::endl;
+        if (KINEMATIC_DEBUG)
+            std::cerr << "Solution with configuration: (" << configuration[0] << ", " << configuration[1] << ", " << configuration[2] << ") is NOT exist. Cosine of angle > 1." << std::endl;
         return false;
     }
 
@@ -85,14 +89,16 @@ bool KR6ArmKinematics::solveIK(const Pose & pose, const std::vector<double> & co
 
     bool valid = checkAngles(solution); 
     if (valid == false) {
-        std::cout << "Solution not valid. Anglse out of range. Configuration: " << configuration[0] << ", " << configuration[1] << ", " << configuration[2] << std::endl;
+        if (KINEMATIC_DEBUG)
+            std::cout << "Solution not valid. Anglse out of range. Configuration: " << configuration[0] << ", " << configuration[1] << ", " << configuration[2] << std::endl;
         return false;
     }
 
     Vector3d testPosition = solveFK(solution);
     Vector3d diffPosition = testPosition - pose.position;
     if (diffPosition.norm() > 0.001) {
-        std::cout << "Solution not valid. Position is not equal to task. Configuration: " << configuration[0] << ", " << configuration[1] << ", " << configuration[2] << std::endl;
+        if (KINEMATIC_DEBUG)
+            std::cout << "Solution not valid. Position is not equal to task. Configuration: " << configuration[0] << ", " << configuration[1] << ", " << configuration[2] << std::endl;
         return false;
     }
 
