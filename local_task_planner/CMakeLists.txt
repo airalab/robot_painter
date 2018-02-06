@@ -10,6 +10,8 @@ find_package(catkin REQUIRED COMPONENTS
 	kuka_cv
 	brics_actuator
 	roscpp
+	tf2_ros
+	tf2
 )
 
 catkin_package()

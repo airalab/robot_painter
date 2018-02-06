@@ -54,6 +54,8 @@
   <build_depend>kuka_cv</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>brics_actuatro</build_depend>
+  <build_depend>tf2</build_depend>
+  <build_depend>tf2_ros</build_depend>
   <build_export_depend>arm_kinematics</build_export_depend>
   <build_export_depend>arm_manipulation</build_export_depend>
   <build_export_depend>kuka_cv</build_export_depend>
@@ -63,6 +65,8 @@
   <exec_depend>kuka_cv</exec_depend>
   <exec_depend>roscpp</exec_depend>
   <exec_depend>brics_actuator</exec_depend>
+  <exec_depend>tf2</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
