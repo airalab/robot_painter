@@ -7,4 +7,7 @@
     <node name="camera_transform_broadcaster" pkg="kuka_cv" type="CameraTransformBroadcaster.py" output="screen">
         <rosparam param="camera_positon">[0.0625, 0, 0]</rosparam>
     </node>
+    <node name="canvas_transform_broadcaster" pkg="kuka_cv" type="CanvasTransformBroadcaster.py" output="screen" />
+    <node name="kuka_cv" pkg="kuka_cv" type="StartCV.py" output="screen" />
+    <node name="image_preprocessor" pkg="Picture-PreProcessing" type="painting_setup.py" output="screen"/>
 </launch>

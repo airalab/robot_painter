@@ -33,3 +33,5 @@
 
 # Python
 *.pyc
+
+*.json

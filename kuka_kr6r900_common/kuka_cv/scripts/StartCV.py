@@ -22,7 +22,7 @@ from kuka_cv.srv import RequestPalette, RequestPaletteResponse
 from kuka_cv.srv import RequestCanvas, RequestCanvasResponse
 from kuka_cv.srv import SetMode, SetModeResponse
 
-# Othre
+# Other
 import numpy as np
 
 
