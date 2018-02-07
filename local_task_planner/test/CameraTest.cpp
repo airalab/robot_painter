@@ -11,10 +11,16 @@
 
 // TF
 #include <tf2_ros/transform_listener.h>
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2/LinearMath/Vector3.h>
+#include <tf2/convert.h>
+#include <tf2/impl/utils.h>
+#include <tf2/utils.h>
 #include <geometry_msgs/TransformStamped.h>
 
 
 #define DEBUG true
+// TODO try using TF as main linear math.
 
 size_t printedMarkers = 0;
 
@@ -394,7 +400,11 @@ int main(int argc, char ** argv)
             }
             catch (tf2::TransformException &ex) {
                 ROS_WARN("%s",ex.what());
-            }
+            } double yaw = 0, pitch = 0, roll = 0;
+            tf2::Quaternion canvasQ; tf2::Vector3 canvasV, picturePointV, pictureLocalV;
+            tf2::fromMsg(transformStamped.transform.rotation, canvasQ);
+            tf2::fromMsg(transformStamped.transform.translation, canvasV);
+            tf2::Matrix3x3 rotMatrix(canvasQ);
 
             size_t count = 0;
             size_t currColorIndex = 0, prevColorIndex = 0;
@@ -459,10 +469,13 @@ int main(int argc, char ** argv)
 
                 // ** Draw the paint
                 // Move under canvas
-                poseForDrawing.position(0) = transformStamped.transform.translation.x;
-                poseForDrawing.position(1) = transformStamped.transform.translation.y;
-                poseForDrawing.position(2) = transformStamped.transform.translation.z + paintingHeight;
-                poseForDrawing.position -= zRotation(brushVector, 1.5708) - zRotation(pictureColors[printedMarkers].position, 1.5708);
+                pictureLocalV = tf2::Vector3(pictureColors[printedMarkers].position[0], pictureColors[printedMarkers].position[1], pictureColors[printedMarkers].position[2]);
+                picturePointV = rotMatrix*pictureLocalV + canvasV;
+
+                poseForDrawing.position(0) = picturePointV.m_floats[0];
+                poseForDrawing.position(1) = picturePointV.m_floats[1];
+                poseForDrawing.position(2) = picturePointV.m_floats[2] + paintingHeight;
+                poseForDrawing.position -= zRotation(brushVector, 1.5708);
                 poseForDrawing.orientation(2) = -1.5708;
                 if (DEBUG) {
                     ROS_INFO_STREAM("[POINT] transform: (" << poseForDrawing.position(0) 
@@ -475,10 +488,10 @@ int main(int argc, char ** argv)
                 // Paint the color
                 poseForDrawing.position(2) -= paintingHeight;
                 manipulator.moveArm(poseForDrawing, config);
-                ros::Duration(0.5).sleep();
-
                 ++printedMarkers;
                 thr.interrupt();
+                ros::Duration(1).sleep();
+
                 rt.sleep();
             }
             thr.join();
