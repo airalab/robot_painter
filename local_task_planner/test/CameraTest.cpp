@@ -16,6 +16,8 @@
 
 #define DEBUG true
 
+size_t printedMarkers = 0;
+
 visualization_msgs::Marker createMarkerMsg(std::vector<kuka_cv::Colour> & colors) {
 
     uint32_t shape = visualization_msgs::Marker::SPHERE_LIST;
@@ -73,6 +75,28 @@ void publishMarkers(visualization_msgs::Marker & marker, size_t rate) {
     ros::NodeHandlePtr node = boost::make_shared<ros::NodeHandle>();
     ros::Publisher pub = node->advertise<visualization_msgs::Marker>("/visualization_marker", 1);
 
+    visualization_msgs::Marker activeMarkers;
+    activeMarkers.header.frame_id = marker.header.frame_id;
+    activeMarkers.header.stamp = ros::Time::now();
+    activeMarkers.ns = marker.ns;
+    activeMarkers.id = marker.id;
+    activeMarkers.type = marker.type;
+    activeMarkers.action = marker.action;
+    activeMarkers.scale.x = marker.scale.x;
+    activeMarkers.scale.y = marker.scale.y;
+    activeMarkers.scale.z = marker.scale.z;
+    activeMarkers.lifetime = marker.lifetime;
+
+    size_t prevValue = printedMarkers;
+    // ROS_INFO_STREAM("printedMarkers:" << printedMarkers);
+
+    if (printedMarkers != 0) {
+        for (size_t i = 0; i < printedMarkers; ++i) {
+            activeMarkers.points.push_back(marker.points[i]);
+            activeMarkers.colors.push_back(marker.colors[i]);
+        }
+    }
+
     ROS_INFO_STREAM("[LTP] Start marker publishing");
     ros::Rate r(rate);
     while (ros::ok()) {
@@ -85,10 +109,37 @@ void publishMarkers(visualization_msgs::Marker & marker, size_t rate) {
             ROS_WARN_ONCE("Please create a subscriber to the marker");
             sleep(1);
         }
-        pub.publish(marker);
+        activeMarkers.header.stamp = ros::Time::now();
+        if (printedMarkers - prevValue == 1) {
+            activeMarkers.points.push_back(marker.points[printedMarkers - 1]);
+            activeMarkers.colors.push_back(marker.colors[printedMarkers - 1]);
+            prevValue = printedMarkers;
+        } else if (printedMarkers - prevValue > 1) {
+            ROS_ERROR_STREAM("Markers ERROR.");
+        }
+        pub.publish(activeMarkers);
         r.sleep();
     }
 }
+
+Vector3d zRotation(Vector3d & v, double angle) {
+    Vector3d result;
+    result(0) = cos(angle)*v(0) + sin(angle)*v(1);
+    result(1) = -sin(angle)*v(0) + cos(angle)*v(2);
+    result(2) = v(2);
+
+    return result;
+}
+
+Vector3d zRotation(std::vector<double> & v, double angle) {
+    Vector3d result;
+    result(0) = cos(angle)*v[0] + sin(angle)*v[1];
+    result(1) = -sin(angle)*v[0] + cos(angle)*v[2];
+    result(2) = v[2];
+
+    return result;
+}
+
 // Функция рисования мазками
 void drawSmear(kuka_cv::Colour & colors, std::vector<kuka_cv::Colour> & palette) {
     Pose p;
@@ -157,7 +208,7 @@ int main(int argc, char ** argv)
 
     // Brush parameters
     Vector3d brushVector;
-    brushVector(0) = 0; brushVector(1) = 0.025; brushVector(2) = -0.18;
+    brushVector(0) = 0.025; brushVector(1) = 0; brushVector(2) = -0.18;
 
     // Starting tf2 listener
     tf2_ros::Buffer tfBuffer;
@@ -214,7 +265,7 @@ int main(int argc, char ** argv)
                 p.position(0) = palette[i].position[0];
                 p.position(1) = palette[i].position[1];  
                 p.position(2) = palette[i].position[2];
-                p.position = p.position - brushVector;
+                p.position = p.position - zRotation(brushVector, -1.5708);
 
                 manipulator.moveArm(p, config);
             }
@@ -329,7 +380,7 @@ int main(int argc, char ** argv)
             size_t paletteSize = palette.size();
             ROS_INFO_STREAM("[LTP] Points number: " << pxNum);
 
-            size_t rate = 1;
+            size_t rate = 3;
             ros::Rate rt(0.5);
             boost::thread thr(publishMarkers, marker, rate);
 
@@ -360,16 +411,16 @@ int main(int argc, char ** argv)
             // Global drawing circle
             while (ros::ok() && isDraw) {
 
-                if (count == pxNum) {
+                if (printedMarkers == pxNum) {
                     isDraw = false;
                 }
 
                 // Find color in palette
                 prevColorIndex = currColorIndex;
-                while (currColorIndex < paletteSize
-                    && pictureColors[count].bgr[0] != palette[currColorIndex].bgr[0] 
-                    && pictureColors[count].bgr[1] != palette[currColorIndex].bgr[1] 
-                    && pictureColors[count].bgr[2] != palette[currColorIndex].bgr[2])
+                while (currColorIndex < paletteSize &&
+                    (pictureColors[printedMarkers].bgr[0] != palette[currColorIndex].bgr[0] ||
+                     pictureColors[printedMarkers].bgr[1] != palette[currColorIndex].bgr[1] ||
+                     pictureColors[printedMarkers].bgr[2] != palette[currColorIndex].bgr[2]))
                 {
                     ++currColorIndex;
                 }
@@ -377,50 +428,58 @@ int main(int argc, char ** argv)
                 if (currColorIndex == paletteSize) {
                     currColorIndex = 0;
                     continue;
+                } else if (currColorIndex > paletteSize) {
+                    ROS_ERROR_STREAM("Error of changing palette color.");
                 }
 
+                if (DEBUG) {
+                    ROS_INFO_STREAM("Count: " << printedMarkers);
+                    ROS_INFO_STREAM("[COLOR] palette: [" 
+                        << palette[currColorIndex].bgr[0] << "," 
+                        << palette[currColorIndex].bgr[1] << "," 
+                        << palette[currColorIndex].bgr[2] << "] vs ("
+                        << pictureColors[printedMarkers].bgr[0] << ","
+                        << pictureColors[printedMarkers].bgr[1] << ","
+                        << pictureColors[printedMarkers].bgr[2] << ")");
+                }
                 // *** Local Control Circle
                 // ** Get the paint
                 // Move under the paints
                 palettePose.position(0) = palette[currColorIndex].position[0];
                 palettePose.position(1) = palette[currColorIndex].position[1];
                 palettePose.position(2) = palette[currColorIndex].position[2] + paintingHeight;
-                palettePose.position = palettePose.position - brushVector;
+                palettePose.position -= zRotation(brushVector, -1.5708);
                 palettePose.orientation(2) = 1.5708;
                 manipulator.moveArm(palettePose, config);
 
                 // Move to desired paint
                 palettePose.position(2) -= paintingHeight;
                 manipulator.moveArm(palettePose, config);
+                ros::Duration(0.5).sleep();
 
                 // ** Draw the paint
                 // Move under canvas
-                poseForDrawing.position(0) = transformStamped.transform.translation.x + pictureColors[count].position[0];
-                poseForDrawing.position(1) = transformStamped.transform.translation.y + pictureColors[count].position[1];
-                poseForDrawing.position(2) = transformStamped.transform.translation.z + pictureColors[count].position[2] + paintingHeight;
-                poseForDrawing.position = poseForDrawing.position - brushVector;
+                poseForDrawing.position(0) = transformStamped.transform.translation.x;
+                poseForDrawing.position(1) = transformStamped.transform.translation.y;
+                poseForDrawing.position(2) = transformStamped.transform.translation.z + paintingHeight;
+                poseForDrawing.position -= zRotation(brushVector, 1.5708) - zRotation(pictureColors[printedMarkers].position, 1.5708);
                 poseForDrawing.orientation(2) = -1.5708;
-                manipulator.moveArm(poseForDrawing, config);
-
-                // Paint the color
-                poseForDrawing.position(2) -= paintingHeight;
-                manipulator.moveArm(poseForDrawing, config);
-
                 if (DEBUG) {
-                    ROS_INFO_STREAM("Count: " << count);
-                    ROS_INFO_STREAM("[COLOR] current: [" 
-                        << palette[currColorIndex].bgr[0] << "," 
-                        << palette[currColorIndex].bgr[1] << "," 
-                        << palette[currColorIndex].bgr[2] << "]");
                     ROS_INFO_STREAM("[POINT] transform: (" << poseForDrawing.position(0) 
                         << ", " << poseForDrawing.position(1)
                         << ", " << poseForDrawing.position(2) << ")");
-                }    
-
+                }
                 manipulator.moveArm(poseForDrawing, config);
 
+                
+                // Paint the color
+                poseForDrawing.position(2) -= paintingHeight;
+                manipulator.moveArm(poseForDrawing, config);
+                ros::Duration(0.5).sleep();
+
+                ++printedMarkers;
+                thr.interrupt();
                 rt.sleep();
-                ++count;
             }
             thr.join();
         }
