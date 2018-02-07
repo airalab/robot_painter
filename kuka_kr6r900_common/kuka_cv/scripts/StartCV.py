@@ -28,7 +28,7 @@ import numpy as np
 
 ### TODO add class for image processing
 class ImageProcessing:
-    def __init__(self, resolution, scaleFactor, tresh, baseFrameName, cameraFrameName, heights, freq):
+    def __init__(self, resolution, scaleFactor, tresh, baseFrameName, cameraFrameName, heights, canvasMargin, freq):
         self.bridge = CvBridge();
 
         # OpenCV settings
@@ -52,6 +52,7 @@ class ImageProcessing:
         self.canvasW = 0
         self.canvasH = 0
         self.canvasRot = 0
+        self.canvasMargin = canvasMargin;
         self.heightToPalette = heights[0]   # Absolute value
         self.heightToCanvas = heights[1]    # Absolute value
 
@@ -220,8 +221,8 @@ class ImageProcessing:
             self.rate.sleep()
 
         resp.trans = self.canvasTranform
-        resp.width = self.canvasW
-        resp.height = self.canvasH
+        resp.width = self.canvasW - 2*self.canvasMargin
+        resp.height = self.canvasH - 2*self.canvasMargin
         return resp
 
 
@@ -255,6 +256,7 @@ def main():
     # TODO calculate scale factor, add function to calibration
     diffPaintDistanceM = [0.0501, -0.013]                           # Distance between paints [m]
     diffPaintDistancePX = [66, -17]                                 # Distance between paints [px]
+    canvasMargin = 0.05;
     scaleFactor = [diffPaintDistanceM[0]/diffPaintDistancePX[0],
                    diffPaintDistanceM[1]/diffPaintDistancePX[1]]    # Scale factor [m/px]
     heights = [0.85, 0.85]
@@ -266,7 +268,7 @@ def main():
 
     # TODO detection
     print("Waiting for set mode service.")
-    imageProcessor = ImageProcessing(resolution, scaleFactor, thresholds, "base_link", "camera_link", heights, freq)
+    imageProcessor = ImageProcessing(resolution, scaleFactor, thresholds, "base_link", "camera_link", heights, canvasMargin, freq)
 
     try:
         rospy.spin()
