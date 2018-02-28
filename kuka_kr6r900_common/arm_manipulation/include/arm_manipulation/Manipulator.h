@@ -19,7 +19,7 @@ class Manipulator
 
         void initArmTopics();
 
-        bool moveArm(const JointValues & jointValues);
+        bool moveArm(JointValues jointValues);
         bool moveArm(const Pose & pose, const std::vector<double> & configuration);
 
     private:

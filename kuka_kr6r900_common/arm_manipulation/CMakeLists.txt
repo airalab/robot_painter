@@ -28,7 +28,6 @@ add_library(${PROJECT_NAME}
   src/Manipulator.cpp
 )
 
-
 add_executable(move_arm src/MoveArm.cpp src/Manipulator.cpp)
 target_link_libraries(move_arm
     ${catkin_LIBRARIES}
