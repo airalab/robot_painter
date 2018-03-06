@@ -1,11 +1,11 @@
 #include "arm_manipulation/Manipulator.h"
 #define MANIPULATION_DEBUG false 
-#define OFFSET_A1 0
-#define OFFSET_A2 -90
-#define OFFSET_A3 90
-#define OFFSET_A4 0
-#define OFFSET_A5 0
-#define OFFSET_A6 0
+// #define OFFSET_A1 0
+// #define OFFSET_A2 -90
+// #define OFFSET_A3 90
+// #define OFFSET_A4 0
+// #define OFFSET_A5 0
+// #define OFFSET_A6 0
 
 
 Manipulator::Manipulator(std::string prefix, ros::NodeHandle & nodeHandle) :nh(nodeHandle), jointPrefix(prefix)
@@ -31,19 +31,19 @@ bool Manipulator::moveArm(JointValues jointValues)
     }
 
     // Convert angles
-    jointValues(0) = jointValues(0) * 180/M_PI - OFFSET_A1;
-    jointValues(1) = jointValues(1) * 180/M_PI - OFFSET_A2;
-    jointValues(2) = jointValues(2) * 180/M_PI - OFFSET_A3;
-    jointValues(3) = jointValues(3) * 180/M_PI - OFFSET_A4;
-    jointValues(4) = jointValues(4) * 180/M_PI - OFFSET_A5;
-    jointValues(5) = jointValues(5) * 180/M_PI - OFFSET_A6;
+    // jointValues(0) = jointValues(0) * 180/M_PI - OFFSET_A1;
+    // jointValues(1) = jointValues(1) * 180/M_PI - OFFSET_A2;
+    // jointValues(2) = jointValues(2) * 180/M_PI - OFFSET_A3;
+    // jointValues(3) = jointValues(3) * 180/M_PI - OFFSET_A4;
+    // jointValues(4) = jointValues(4) * 180/M_PI - OFFSET_A5;
+    // jointValues(5) = jointValues(5) * 180/M_PI - OFFSET_A6;
     brics_actuator::JointPositions jointPositions = createArmPositionMsg(jointPrefix, jointValues);
     
     if (MANIPULATION_DEBUG)
         ROS_INFO_STREAM("[AM] Move to pose.");
 
     std::cout << "Angles: (" << jointValues(0);
-    for (size_t i = 0; i < DOF; ++i) {
+    for (size_t i = 1; i < DOF; ++i) {
         std:: cout << ", " << jointValues(i);
     }
     std::cout << ")" << std::endl;
