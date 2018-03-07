@@ -35,6 +35,7 @@ int main(int argc, char *argv[])
             manipulator.moveArm(pose, config);
         } else if (answer == "ang") {
             std::cout << "ang: "; std::cin >> jv(0) >> jv(1) >> jv(2) >> jv(3) >> jv(4) >> jv(5);
+            manipulator.moveArm(jv);
         }
         std::cout << "Do you wont move the arm? (y, n): "; std::cin >> answer;
     }
