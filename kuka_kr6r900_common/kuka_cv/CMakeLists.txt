@@ -1,29 +1,29 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(kuka_cv)
 
-find_package(catkin REQUIRED rospy roslib sensor_msgs geometry_msgs message_generation)
+add_definitions(-std=c++11)
 
-## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  Palette.msg
-  Colour.msg
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
 )
+find_package(OpenCV REQUIRED)
+set(DEPENDENCIES realsense)
 
-## Generate services in the 'srv' folder
-add_service_files(
-  FILES
-  RequestPalette.srv
-  RequestCanvas.srv
-  SetMode.srv
-)
-
-## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  geometry_msgs
-)
 
 catkin_package(
-  CATKIN_DEPENDS message_runtime
+#  INCLUDE_DIRS include
+#  LIBRARIES kuka_cv
+#  CATKIN_DEPENDS roscpp
+#  DEPENDS system_lib
 )
+
+
+include_directories(
+  include
+  ${catkin_INCLUDE_DIRS}
+)
+
+add_executable(FirstTest tests/FirstTets.cpp src/CommonCV.cpp)
+target_link_libraries(FirstTest ${OpenCV_LIBS} ${DEPENDENCIES})
+add_executable(CalcWidth tests/CalcWidth.cpp src/CommonCV.cpp)
+target_link_libraries(CalcWidth ${OpenCV_LIBS})

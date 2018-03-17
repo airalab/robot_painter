@@ -1,4 +1,0 @@
----
-geometry_msgs/Transform trans
-float64 width
-float64 height
