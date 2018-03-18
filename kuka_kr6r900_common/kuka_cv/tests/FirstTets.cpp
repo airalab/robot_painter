@@ -34,6 +34,8 @@ int main(int argc, char ** argv)
 {
     const auto window_name = "Image";
     cv::Mat image;
+    std::vector<float> radii;
+    std::vector<cv::Point> centers;
     std::vector<Quadrilateral> quad;
     cv::namedWindow(window_name, cv::WINDOW_AUTOSIZE);
 
@@ -47,8 +49,7 @@ int main(int argc, char ** argv)
     for (size_t q = 0; q < quad.size(); ++q) {
         drawQuadrilateral(image, quad[q]);
     }
-    findCirclesByCanny(image);
-    cv::imshow(window_name, image);
+    findCirclesByCanny(image, radii, centers);
     cv::waitKey(0);
 #elif CAMERA == 2
     cv::VideoCapture videoCapture;

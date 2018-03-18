@@ -1,0 +1,5 @@
+int8 mode
+---
+Pose p
+float64 width
+float64 height

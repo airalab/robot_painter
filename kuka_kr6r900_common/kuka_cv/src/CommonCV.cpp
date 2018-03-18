@@ -127,13 +127,11 @@ void drawQuadrilateral(cv::Mat & image, Quadrilateral & q) {
     cv::circle(image, q.center, 5, cv::Scalar(0, 0, 255), 2, 8);
 }
 
-void findCirclesByCanny(cv::Mat & src)
+void findCirclesByCanny(cv::Mat & src, std::vector<float> & circlesRadii, std::vector<cv::Point> & circlesCenters)
 {
     cv::Mat dst, gray, edges;
     std::vector<std::vector<cv::Point>> contours;
     std::vector<std::vector<cv::Point>> contoursPoly;
-    std::vector<cv::Point2f> circlesCenters;
-    std::vector<float> circlesRadii;
     std::vector<cv::Vec4i> hierarchy;
     float radius;
     cv::Point2f center;
