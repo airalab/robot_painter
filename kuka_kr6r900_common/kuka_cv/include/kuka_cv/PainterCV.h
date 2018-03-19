@@ -62,7 +62,6 @@ class PainterCV
             std::vector<cv::Point> & p, std::vector<cv::Vec3b> & c);
         void loadServices();
 
-        kx = info.kx; ky = info.ky;
     private:
 
         /// Image updaters

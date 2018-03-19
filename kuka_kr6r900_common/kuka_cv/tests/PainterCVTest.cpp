@@ -16,9 +16,14 @@ int main(int argc, char ** argv)
     // 4 |  from Topic      (set topicName)
 
     CameraWorkingInfo info;
-    info.workMode = 4;
+    // Config for image;
     // info.deviceNumber = 0;
     // info.imagePath = "/home/senex/Tkests/RealsenseCV/SavedImages/Image.jpg";
+
+    // Config for topic
+    info.workMode = 4;
+    info.kx = 0.3/390;
+    info.ky = 0.3/390;
     info.topicName = "/Camera";
 
     PainterCV cv(nh, info, freq);

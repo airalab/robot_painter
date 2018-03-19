@@ -9,6 +9,7 @@ PainterCV::PainterCV(ros::NodeHandle & nh, CameraWorkingInfo info, int frequency
     workMode = info.workMode;
     camWidth = 0; camHeight = 0;
     packagePath = ros::package::getPath("kuka_cv");
+    kx = info.kx; ky = info.ky;
 
     switch(info.workMode) {
         case 1: // From image
@@ -135,8 +136,10 @@ void PainterCV::detectPaletteColors(cv::Mat & src, std::vector<cv::Point> & p, s
         ros::shutdown();
     }
     c.resize(p.size());
-    for (size_t i = 0; i < p.size(); ++i)
+    for (size_t i = 0; i < p.size(); ++i) {
+        std::cout << "[radius " << i << "] \t" << radii[i] << std::endl;
         c[i] = src.at<cv::Vec3b>(p[i]);
+    }
     // cv::imshow("circles", src);
     // cv::waitKey(0);
 }
@@ -164,7 +167,7 @@ bool PainterCV::canvasCallback(kuka_cv::RequestCanvas::Request  & req,
         ROS_INFO("Start Image Processing | Try to find canvas ...");
         std::vector<Quadrilateral> q;
         Quadrilateral quad;
-        int width, height;
+        double width, height;
         kuka_cv::Pose p;
         cv::Point diff1;
         cv::Point diff2;
@@ -188,8 +191,8 @@ bool PainterCV::canvasCallback(kuka_cv::RequestCanvas::Request  & req,
         p.y = quad.center.y;
         p.z = TEST_Z;
         transformCameraFrame(p);
-        width = round(sqrt(diff1.x*diff1.x + diff1.y*diff1.y));
-        height = round(sqrt(diff2.x*diff2.x + diff2.y*diff2.y));
+        width = (sqrt(kx*diff1.x * kx*diff1.x + ky*diff1.y * ky*diff1.y));
+        height = (sqrt(kx*diff2.x * kx*diff2.x + ky*diff2.y * ky*diff2.y));
 
         canvas.p = p;
         canvas.width = width;
@@ -209,8 +212,8 @@ bool PainterCV::paletteCallback(kuka_cv::RequestPalette::Request  & req,
     // 1 - get info
 
     if (req.mode == 0) {
-        std::vector<cv::Point> p;
-        std::vector<cv::Vec3b> c;
+        std::vector<cv::Point> p;   // Palette position of center
+        std::vector<cv::Vec3b> c;   // Paints colors
         kuka_cv::Color color;
         kuka_cv::Pose pose;
 
