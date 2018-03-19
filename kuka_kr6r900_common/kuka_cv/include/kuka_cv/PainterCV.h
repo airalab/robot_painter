@@ -42,6 +42,10 @@ struct CameraWorkingInfo
     // If selected mode 3
     // Realsense automaticly find device numer
     // and other information
+
+    // Other information
+    // If kx and ky are unnown set kx and ky = 1;
+    double kx, ky;
 };
 
 class PainterCV
@@ -56,6 +60,9 @@ class PainterCV
         Quadrilateral detectCanvas(cv::Mat & src);
         void detectPaletteColors(cv::Mat & src,
             std::vector<cv::Point> & p, std::vector<cv::Vec3b> & c);
+        void loadServices();
+
+        kx = info.kx; ky = info.ky;
     private:
 
         /// Image updaters
@@ -98,10 +105,17 @@ class PainterCV
 
         /// Camera resolution
         double camWidth, camHeight;
+        /// Camera m/px coefficients
+        double kx, ky;
 
         /// Main information
         kuka_cv::RequestPalette::Response palette;
         kuka_cv::RequestCanvas::Response canvas;
+
+        /// Global Node handle
+        ros::NodeHandle n;
+
+        std::string packagePath;
 };
 
 rs::device * findCamera(rs::context & ctx);

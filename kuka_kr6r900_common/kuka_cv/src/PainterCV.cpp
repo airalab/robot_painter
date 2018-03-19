@@ -1,11 +1,14 @@
 #include <kuka_cv/PainterCV.h>
+#include <ros/package.h>
 #define TEST_Z 0.2
 
 PainterCV::PainterCV(ros::NodeHandle & nh, CameraWorkingInfo info, int frequency)
+: n(nh)
 {
     freq = frequency;
     workMode = info.workMode;
     camWidth = 0; camHeight = 0;
+    packagePath = ros::package::getPath("kuka_cv");
 
     switch(info.workMode) {
         case 1: // From image
@@ -31,12 +34,15 @@ PainterCV::PainterCV(ros::NodeHandle & nh, CameraWorkingInfo info, int frequency
         default:
             std::cout << "[Painter CV] Work Mode is not correct!" << std::endl;
     }
-    canvasServer = nh.advertiseService("request_canvas", &PainterCV::canvasCallback, this);
-    paletteService = nh.advertiseService("request_palette", &PainterCV::paletteCallback, this);;
 }
 PainterCV::~PainterCV()
 {}
 
+void PainterCV::loadServices()
+{
+    canvasServer = n.advertiseService("request_canvas", &PainterCV::canvasCallback, this);
+    paletteService = n.advertiseService("request_palette", &PainterCV::paletteCallback, this);
+}
 void PainterCV::updateImageByOpenCV()
 {
     cv::VideoCapture videoCapture;
@@ -90,11 +96,11 @@ void PainterCV::imageCallback(const sensor_msgs::Image::ConstPtr & msg)
 {
 
     try {
-      cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+        cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
     }
     catch (cv_bridge::Exception& e) {
-      ROS_ERROR("cv_bridge exception: %s", e.what());
-      ros::shutdown();
+        ROS_ERROR("cv_bridge exception: %s", e.what());
+        ros::shutdown();
     }
 
     image = cv_ptr->image;
@@ -109,23 +115,17 @@ void PainterCV::getImage(cv::Mat & img)
     img = image;
 }
 
-Quadrilateral PainterCV::detectCanvas(cv::Mat & src)
-{
-    std::vector<Quadrilateral> quad;
+// Quadrilateral PainterCV::detectCanvas(cv::Mat & src)
+// {
+//     std::vector<Quadrilateral> quad;
 
-    quad = findQuadrilateralByHough(src);
-    if (quad.size() == 0) {
-        ROS_ERROR("Canvas not found!");
-        ros::shutdown();
-    } else if (quad.size() > 1) {
-        ROS_ERROR("To more quadrilateral is found!");
-        ros::shutdown();
-    }
-    drawQuadrilateral(src, quad[0]);
-    cv::imshow("Canvas", src);
-    cv::waitKey(0);
-    return quad[0];
-}
+//     quad = findQuadrilateralByHough(src);
+
+//     // drawQuadrilateral(src, quad[0]);
+//     // cv::imshow("Canvas", src);
+//     // cv::waitKey(0);
+//     return quad[0];
+// }
 void PainterCV::detectPaletteColors(cv::Mat & src, std::vector<cv::Point> & p, std::vector<cv::Vec3b> & c)
 {
     std::vector<float> radii;
@@ -137,14 +137,14 @@ void PainterCV::detectPaletteColors(cv::Mat & src, std::vector<cv::Point> & p, s
     c.resize(p.size());
     for (size_t i = 0; i < p.size(); ++i)
         c[i] = src.at<cv::Vec3b>(p[i]);
-    cv::imshow("circles", src);
-    cv::waitKey(0);
+    // cv::imshow("circles", src);
+    // cv::waitKey(0);
 }
 void PainterCV::transformCameraFrame(kuka_cv::Pose & p)
 {
     kuka_cv::Pose p2;
-    p2.x = -(p.y - camHeight);
-    p2.y = -(p.x - camWidth);
+    p2.x = -kx*(p.y - camHeight/2);
+    p2.y = -ky*(p.x - camWidth/2);
     p2.z = -p.z;
 
     p.x = p2.x;
@@ -161,13 +161,27 @@ bool PainterCV::canvasCallback(kuka_cv::RequestCanvas::Request  & req,
     // 1 - get info
 
     if (req.mode == 0) {
+        ROS_INFO("Start Image Processing | Try to find canvas ...");
+        std::vector<Quadrilateral> q;
         Quadrilateral quad;
         int width, height;
         kuka_cv::Pose p;
         cv::Point diff1;
         cv::Point diff2;
 
-        quad = detectCanvas(image);
+        size_t i = 0;
+        while (q.size() != 1 && i < 100) {
+            q = findQuadrilateralByHough(image);
+            ++i;
+        }
+        if (i > 99) {
+            ROS_ERROR("Canvas not found!!!");
+            cv::imwrite(packagePath + "/images/error_canvas_image.jpg", image);
+            ros::shutdown();
+            return false;
+        }
+        quad = q[0];
+
         diff1 = quad.p[0] - quad.p[1];
         diff2 = quad.p[1] - quad.p[2];
         p.x = quad.center.x;

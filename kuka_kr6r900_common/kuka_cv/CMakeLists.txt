@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   cv_bridge
   message_generation
+  roslib
 )
 find_package(OpenCV REQUIRED)
 find_package(Boost COMPONENTS system thread REQUIRED)
@@ -43,11 +44,11 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(FirstTest tests/FirstTets.cpp src/CommonCV.cpp)
-target_link_libraries(FirstTest ${OpenCV_LIBS} ${DEPENDENCIES})
-
-add_executable(CalcWidth tests/CalcWidth.cpp src/CommonCV.cpp)
-target_link_libraries(CalcWidth ${OpenCV_LIBS})
-
 add_executable(CVTest tests/PainterCVTest.cpp src/CommonCV.cpp src/PainterCV.cpp)
 target_link_libraries(CVTest ${OpenCV_LIBS} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${DEPENDENCIES})
+
+add_executable(canvas_test tests/CanvasTest.cpp src/CommonCV.cpp)
+target_link_libraries(canvas_test ${OpenCV_LIBS} ${catkin_LIBRARIES})
+
+add_executable(palette_test tests/PaletteTest.cpp src/CommonCV.cpp src/PainterCV.cpp)
+target_link_libraries(palette_test ${OpenCV_LIBS} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${DEPENDENCIES})

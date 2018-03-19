@@ -5,7 +5,7 @@ int main(int argc, char ** argv)
     ros::init(argc, argv, "cv_test");
     ros::NodeHandle nh;
 
-    // ros::AsyncSpinner spinner(4);
+    ros::AsyncSpinner spinner(2);
     int freq = 10; // in hz (image updating frequency)
 
     // Configure camera work
@@ -22,6 +22,7 @@ int main(int argc, char ** argv)
     info.topicName = "/Camera";
 
     PainterCV cv(nh, info, freq);
+    cv.loadServices();
     // int var = 0;
     // cv::Mat image;
     // ros::Rate r(freq);
@@ -31,10 +32,10 @@ int main(int argc, char ** argv)
     //         cv::imshow("Image", image);
     //     cv::waitKey(1);
     // }
-    // spinner.start();
-    // ros::waitForShutdown();
+    spinner.start();
+    ros::waitForShutdown();
 
-    ros::spin();
+    // ros::spin();
 
     return 0;
 }

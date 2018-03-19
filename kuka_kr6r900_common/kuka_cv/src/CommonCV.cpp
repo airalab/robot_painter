@@ -2,6 +2,8 @@
 #include <iostream>
 #include <math.h>
 
+#define COMMONCV_DEBUG false
+
 bool checkUniqueOfVector(std::vector<cv::Vec2f> & vec, cv::Vec2f critria, cv::Vec2f maxDiff)
 {
     if (vec.empty())
@@ -24,29 +26,69 @@ bool checkUniqueOfVector(std::vector<Quadrilateral> & vec, Quadrilateral critria
     return true;
 }
 
+void drawQuadrilateral(cv::Mat & image, Quadrilateral & q) {
+    for (size_t p = 0; p < 4; ++p) {
+        if (p != 3)
+            cv::line(image, q.p[p], q.p[p+1], cv::Scalar(0, 200, 200), 2, 8);
+        else
+            cv::line(image, q.p[p], q.p[0], cv::Scalar(0, 200, 200), 2, 8);
+        cv::circle(image, q.p[p], 5, cv::Scalar(0, 0, 200), 2, 8);
+        cv::putText(image, std::to_string(p), q.p[p], cv::FONT_HERSHEY_SIMPLEX, 1.2, cv::Scalar(0,0,200), 2, CV_AA);
+    }
+    cv::circle(image, q.center, 5, cv::Scalar(0, 0, 255), 2, 8);
+}
+
+void drawPolarLines(cv::Mat & image, std::vector<cv::Vec2f> & lines)
+{
+    float rho, theta;
+    double a, b, x0, y0;
+    cv::Vec4f l;
+    for (size_t i = 0; i < lines.size(); ++i) {
+        rho = lines[i][0], theta = lines[i][1];
+
+        a = cos(theta); b = sin(theta);
+        x0 = a*rho; y0 = b*rho;
+        l[0] = cvRound(x0 + 1000*(-b));
+        l[1] = cvRound(y0 + 1000*(a));
+        l[2] = cvRound(x0 - 1000*(-b));
+        l[3] = cvRound(y0 - 1000*(a));
+        line(image, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(0, 100, 100), 3, CV_AA);
+    }
+}
+
 std::vector<Quadrilateral> findQuadrilateralByHough(cv::Mat & src)
 {
     cv::Mat blur, mask;
 
      /// Blur
     cv::medianBlur(src, blur, 9);
-    // imshow("blur", blur);
+    if (COMMONCV_DEBUG)
+        imshow("blur", blur);
 
     /// Edge detection
     cv::Canny(blur, mask, 60, 3*60, 3);
-    // imshow("canny", mask);
+    if (COMMONCV_DEBUG)
+        imshow("canny", mask);
 
     std::vector<Quadrilateral> rectangles;
     std::vector<std::vector<cv::Point> > contours;
     std::vector<cv::Vec4i> hierarchy;
-    cv::findContours(mask, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+    // cv::findContours(mask, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+    // cv::findContours(mask, contours, hierarchy, CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+    cv::findContours(mask, contours, hierarchy, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+    // cv::findContours(mask, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+
     for(int i = 0; i < contours.size(); ++i) {
         if (cv::contourArea(contours[i]) > MIN_AREA) {
             cv::Mat drawing = cv::Mat::zeros(mask.size(), CV_8UC1);
             std::vector<cv::Vec2f> lines;
             std::vector<cv::Vec2f> uniLin;
             cv::drawContours(drawing, contours, i, cv::Scalar(255), 1, CV_AA, hierarchy, 0, cv::Point());
-            cv::HoughLines(drawing, lines, 1, CV_PI/180, 100, 0, 0);
+            cv::HoughLines(drawing, lines, 1, CV_PI/180, 200, 0, 0);
+
+            if (COMMONCV_DEBUG) {
+                cv::imshow("drawing" + std::to_string(i), drawing);
+            }
 
             for(size_t ln = 0; ln < lines.size(); ln++)
             {
@@ -59,6 +101,10 @@ std::vector<Quadrilateral> findQuadrilateralByHough(cv::Mat & src)
                 }
             }
 
+            if (COMMONCV_DEBUG) {
+                std::cout << "Unique lines of contours: " << uniLin.size() << std::endl;
+                drawPolarLines(src, uniLin);
+            }
             if (uniLin.size() != 4) continue;
 
             // Find Intersections
@@ -115,17 +161,7 @@ std::vector<Quadrilateral> findQuadrilateralByHough(cv::Mat & src)
     }
     return uniRect;
 }
-void drawQuadrilateral(cv::Mat & image, Quadrilateral & q) {
-    for (size_t p = 0; p < 4; ++p) {
-        if (p != 3)
-            cv::line(image, q.p[p], q.p[p+1], cv::Scalar(0, 200, 200), 2, 8);
-        else 
-            cv::line(image, q.p[p], q.p[0], cv::Scalar(0, 200, 200), 2, 8);
-        cv::circle(image, q.p[p], 5, cv::Scalar(0, 0, 200), 2, 8);
-        cv::putText(image, std::to_string(p), q.p[p], cv::FONT_HERSHEY_SIMPLEX, 1.2, cv::Scalar(0,0,200), 2, CV_AA);
-    }
-    cv::circle(image, q.center, 5, cv::Scalar(0, 0, 255), 2, 8);
-}
+
 
 void findCirclesByCanny(cv::Mat & src, std::vector<float> & circlesRadii, std::vector<cv::Point> & circlesCenters)
 {
