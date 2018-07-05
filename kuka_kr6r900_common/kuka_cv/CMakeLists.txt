@@ -9,6 +9,8 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   message_generation
   roslib
+  tf2_ros
+  geometry_msgs
 )
 find_package(OpenCV REQUIRED)
 find_package(Boost COMPONENTS system thread REQUIRED)
@@ -34,7 +36,7 @@ generate_messages(
 
 catkin_package (
 #  INCLUDE_DIRS include
-#  LIBRARIES kuka_cv
+  LIBRARIES kuka_cv
 	CATKIN_DEPENDS message_runtime
 #  DEPENDS system_lib
 )
@@ -44,11 +46,37 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(CVTest tests/PainterCVTest.cpp src/CommonCV.cpp src/PainterCV.cpp)
-target_link_libraries(CVTest ${OpenCV_LIBS} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${DEPENDENCIES})
 
-add_executable(canvas_test tests/CanvasTest.cpp src/CommonCV.cpp)
-target_link_libraries(canvas_test ${OpenCV_LIBS} ${catkin_LIBRARIES})
+# Create kuka_cv library
+add_library(${PROJECT_NAME}
+  src/CommonCV.cpp src/CameraTransforms.cpp src/PainterCV.cpp
+)
+target_link_libraries(${PROJECT_NAME}
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBS}
+    ${Boost_LIBRARIES}
+    ${DEPENDENCIES}
+)
 
-add_executable(palette_test tests/PaletteTest.cpp src/CommonCV.cpp src/PainterCV.cpp)
-target_link_libraries(palette_test ${OpenCV_LIBS} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${DEPENDENCIES})
+add_executable(CVTest tests/PainterCVTest.cpp)
+target_link_libraries(CVTest ${PROJECT_NAME})
+
+add_executable(canvas_test tests/CanvasTest.cpp)
+target_link_libraries(canvas_test ${PROJECT_NAME})
+
+add_executable(palette_test tests/PaletteTest.cpp)
+target_link_libraries(palette_test ${PROJECT_NAME})
+
+add_executable(br_test tests/broadcaster_test.cpp)
+target_link_libraries(br_test ${PROJECT_NAME})
+
+install(TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+install(DIRECTORY include/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN ".svn" EXCLUDE
+)

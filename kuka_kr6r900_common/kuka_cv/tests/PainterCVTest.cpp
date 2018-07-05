@@ -20,11 +20,21 @@ int main(int argc, char ** argv)
     // info.deviceNumber = 0;
     // info.imagePath = "/home/senex/Tkests/RealsenseCV/SavedImages/Image.jpg";
 
+    // Calculation
+    cv::Point_<double> colorPoint1_px(47, -124);
+    cv::Point_<double> colorPoint2_px(-66, -58);
+    cv::Point_<double> paintsDiff_m(0.08652, -0.0505);
+    cv::Point_<double> k = (colorPoint1_px - colorPoint2_px);
+    k.x = paintsDiff_m.x/k.x;
+    k.y = paintsDiff_m.y/k.y;
+
     // Config for topic
     info.workMode = 4;
-    info.kx = 0.3/390;
-    info.ky = 0.3/390;
+    info.kx = k.x;
+    info.ky = k.y;
     info.topicName = "/Camera";
+    info.cameraLinkName = "camera_link";
+    info.brushTransform = -0.172;
 
     PainterCV cv(nh, info, freq);
     cv.loadServices();

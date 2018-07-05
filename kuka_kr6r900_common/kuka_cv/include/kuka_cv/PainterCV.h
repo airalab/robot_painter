@@ -2,6 +2,7 @@
 #define PAINTER_CV
 
 #include <CommonCV.h>
+#include <CameraTransforms.h>
 
 // ROS
 #include <ros/ros.h>
@@ -9,6 +10,7 @@
 
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/image_encodings.h>
+#include <geometry_msgs/TransformStamped.h>
 
 #include <kuka_cv/Color.h>
 #include <kuka_cv/Pose.h>
@@ -21,46 +23,21 @@
 // Librealsense
 #include <librealsense/rs.hpp>
 
-struct CameraWorkingInfo
-{
-    // 1 - from image;
-    // 2 - using onboard web camera
-    // 3 - using intel realsense
-    // 4 - work with topic
-    int workMode;
-
-    // If selected mode 1
-    std::string imagePath;
-
-    // If selected mode 2
-    int deviceNumber;
-
-    // If selected mode 4
-    std::string topicName;
-    std::string messageType;
-
-    // If selected mode 3
-    // Realsense automaticly find device numer
-    // and other information
-
-    // Other information
-    // If kx and ky are unnown set kx and ky = 1;
-    double kx, ky;
-};
-
 class PainterCV
 {
     public:
         PainterCV(ros::NodeHandle & nh, CameraWorkingInfo info, int frequency);
         ~PainterCV();
 
-        void getImage(cv::Mat & img);
+        cv::Mat getImage();
 
         /// Image processing
         Quadrilateral detectCanvas(cv::Mat & src);
-        void detectPaletteColors(cv::Mat & src,
+        bool detectPaletteColors(cv::Mat & src,
             std::vector<cv::Point> & p, std::vector<cv::Vec3b> & c);
         void loadServices();
+
+        CameraTransforms camTransforms;
 
     private:
 
@@ -76,8 +53,8 @@ class PainterCV
         bool paletteCallback(kuka_cv::RequestPalette::Request  & req,
                              kuka_cv::RequestPalette::Response & res);
 
-        /// Tranform frame from default to join 6
-        void transformCameraFrame(kuka_cv::Pose & p);
+        /// get Transform vector from base_link to camera_link
+        void getTransformFromBaseToCam(kuka_cv::Pose & p);
 
         ros::ServiceServer canvasServer;
         ros::ServiceServer paletteService;

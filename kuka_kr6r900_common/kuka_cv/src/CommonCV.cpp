@@ -137,7 +137,7 @@ std::vector<Quadrilateral> findQuadrilateralByHough(cv::Mat & src)
                         break;
                     }
                     if (ln2_check == 0) ln2_check == ln2;
-                    det = sin(uniLin[ln2][1] - uniLin[ln1][1]); 
+                    det = sin(uniLin[ln2][1] - uniLin[ln1][1]);
                 } while (cv::abs(det) < 0.3);
                 if (fullCircle) {
                     std::cout << "Error! Ln2 if full circle!" << std::endl;
@@ -147,7 +147,7 @@ std::vector<Quadrilateral> findQuadrilateralByHough(cv::Mat & src)
                 pt.x =  uniLin[ln1][0]*sin(uniLin[ln2][1])/det - uniLin[ln2][0]*sin(uniLin[ln1][1])/det;
                 pt.y = -uniLin[ln1][0]*cos(uniLin[ln2][1])/det + uniLin[ln2][0]*cos(uniLin[ln1][1])/det;
                 points.push_back(pt);
-            } 
+            }
             rectangles.push_back(Quadrilateral(points[0], points[1], points[2], points[3]));
         }
     }
