@@ -1,14 +1,18 @@
-<?xml version="1.0"?>
 <launch>
-    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
-    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find kuka_kr6_support)/config/preview-config.rviz" required="true" />
-    <include file="$(find kuka_kr6_support)/launch/load_kr6r900sixx.launch" />
 
-    <node name="frame_broadcaster" pkg="kuka_cv" type="FrameBroadcaster.py" output="screen">
-        <rosparam param="camera_positon">[0.0625, 0, 0]</rosparam>
-        <rosparam param="brush_position">[0.025, 0, 0]</rosparam>
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+        <param name="use_gui" value="false" />
+        <rosparam param="source_list">["/kuka_arm/joint_states"]</rosparam>
     </node>
-    <node name="canvas_transform_broadcaster" pkg="kuka_cv" type="CanvasTransformBroadcaster.py" output="screen" />
-    <node name="kuka_cv" pkg="kuka_cv" type="StartCV.py" output="screen" />
-    <node name="image_preprocessor" pkg="Picture-PreProcessing" type="painting_setup.py" output="screen"/>
+
+    <!-- upoad URDF model to the parameter server -->
+    <param name="robot_description" command="$(find xacro)/xacro.py '$(find kuka_kr6_support)/urdf/kr6r900sixx_painter.xacro'"/>
+
+    <!-- start robot_state_publisher -->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find kuka_kr6_support)/config/preview-config.rviz" required="true" />
+    <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find industrial_robot_client)/config/robot_state_visualize.rviz" required="true" /> -->
+
+    <!-- <node name="image_preprocessor" pkg="Picture-PreProcessing" type="painting_setup.py" output="screen"/> -->
 </launch>
