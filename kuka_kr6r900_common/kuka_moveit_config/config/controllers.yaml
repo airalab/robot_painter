@@ -1,5 +1,8 @@
 controller_list:
-  - name: fake_arm_controller
+  - name: kuka_arm/arm_controller
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    default: true
     joints:
       - joint_a1
       - joint_a2
@@ -7,6 +10,3 @@ controller_list:
       - joint_a4
       - joint_a5
       - joint_a6
-  - name: fake_gripper_controller
-    joints:
-      []
