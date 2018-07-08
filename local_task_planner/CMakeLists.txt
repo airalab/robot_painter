@@ -12,6 +12,10 @@ find_package(catkin REQUIRED COMPONENTS
 	roscpp
 	tf2_ros
 	tf2
+    moveit_ros_move_group
+    moveit_ros_visualization
+    moveit_visual_tools
+    moveit_msgs
 )
 
 catkin_package()
@@ -23,4 +27,14 @@ include_directories(
 add_executable(camera_test test/CameraTest.cpp)
 target_link_libraries(camera_test
 	${catkin_LIBRARIES}
+)
+
+add_executable(moveit_ik_test test/moveit_ik_test.cpp)
+target_link_libraries(moveit_ik_test
+    ${catkin_LIBRARIES}
+)
+
+add_executable(move_group_test test/move_group_test.cpp)
+target_link_libraries(move_group_test
+    ${catkin_LIBRARIES}
 )
