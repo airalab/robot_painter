@@ -136,9 +136,9 @@ void publishMarkers(visualization_msgs::Marker & marker, size_t rate) {
 
 const double COLOR_BOTLE_HEIGHT = 0.06;
 const double COLOR_HEIGHT = 0.045;
-const double HEIGHT_OFFSET = COLOR_BOTLE_HEIGHT - COLOR_HEIGHT + 0.01;
-const double BRUSH_HEIGHT = 0.1;
-const double BRUSH_WIDTH = 0.1;
+const double HEIGHT_OFFSET = COLOR_BOTLE_HEIGHT - COLOR_HEIGHT + 0.02;
+const double BRUSH_HEIGHT = 0.01;
+const double BRUSH_WIDTH = 0.01;
 
 int main(int argc, char ** argv)
 {
