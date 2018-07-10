@@ -8,8 +8,8 @@ int main(int argc, const char *argv[])
     jv(1) = -M_PI/2;
     jv(2) = M_PI/2;
 
-    Vector3d pos = kinematics.solveFK(jv);
-    Vector3d orient;
+    Vector3d pos(0.3, 0, 0.5);
+    Vector3d orient(0, 1.5708, 0);
     Pose pose;
     pose.position = pos;
     pose.orientation = orient;

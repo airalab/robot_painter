@@ -144,7 +144,8 @@ int main(int argc, char ** argv)
 {
     ros::init(argc, argv, "camera_test");
     ros::NodeHandle nh;
-
+    ros::AsyncSpinner spinner(1);
+    spinner.start();
 
 
     // Service client

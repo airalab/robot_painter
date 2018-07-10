@@ -18,56 +18,56 @@ rviz_visual_tools::colors color = rviz_visual_tools::colors::RED;
 int main(int argc, char ** argv)
 {
 
-	ros::init(argc, argv, "move_group_test");
-	ros::NodeHandle nh;
-	ros::AsyncSpinner spinner(1);
-	spinner.start();
+    ros::init(argc, argv, "move_group_test");
+    ros::NodeHandle nh;
+    ros::AsyncSpinner spinner(1);
+    spinner.start();
 
-	// Planning group
-	static const std::string PLANNING_GROUP = "manipulator";
-	std::vector<double> jv; // Joint values
-	std::vector<std::string> jn; // Joint names
+    // Planning group
+    static const std::string PLANNING_GROUP = "manipulator";
+    std::vector<double> jv; // Joint values
+    std::vector<std::string> jn; // Joint names
 
-	moveit::planning_interface::MoveGroupInterface move_group(PLANNING_GROUP);
-	moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
-	const robot_state::JointModelGroup* joint_model_group =
-		move_group.getCurrentState()->getJointModelGroup(PLANNING_GROUP);
-	robot_model::RobotModelConstPtr robot = move_group.getRobotModel();
-	robot_state::RobotState currentState(robot);
+    moveit::planning_interface::MoveGroupInterface move_group(PLANNING_GROUP);
+    moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
+    const robot_state::JointModelGroup* joint_model_group =
+        move_group.getCurrentState()->getJointModelGroup(PLANNING_GROUP);
+    robot_model::RobotModelConstPtr robot = move_group.getRobotModel();
+    robot_state::RobotState currentState(robot);
 
-	/** Planning scene initialization **/
-	planning_scene::PlanningScenePtr planning_scene(new planning_scene::PlanningScene(robot));
-	planning_scene->setCurrentState(currentState);
+    /** Planning scene initialization **/
+    planning_scene::PlanningScenePtr planning_scene(new planning_scene::PlanningScene(robot));
+    planning_scene->setCurrentState(currentState);
 
     planning_pipeline::PlanningPipelinePtr planning_pipeline(
         new planning_pipeline::PlanningPipeline(robot, nh, "planning_plugin", "request_adapters"));
 
 
-	// Visualisation
-	namespace rvt = rviz_visual_tools;
-	moveit_visual_tools::MoveItVisualTools visual_tools("base_link", RVIZ_MARKER_TOPIC, robot);
-	visual_tools.deleteAllMarkers();
+    // Visualisation
+    namespace rvt = rviz_visual_tools;
+    moveit_visual_tools::MoveItVisualTools visual_tools("base_link", RVIZ_MARKER_TOPIC, robot);
+    visual_tools.deleteAllMarkers();
 
-	visual_tools.loadRemoteControl();
+    visual_tools.loadRemoteControl();
 
-	Eigen::Affine3d text_pose = Eigen::Affine3d::Identity();
-	text_pose.translation().z() = 1.75;
-	visual_tools.publishText(text_pose, "MoveGroupInterface Demo", rvt::WHITE, rvt::XLARGE);
+    Eigen::Affine3d text_pose = Eigen::Affine3d::Identity();
+    text_pose.translation().z() = 1.75;
+    visual_tools.publishText(text_pose, "MoveGroupInterface Demo", rvt::WHITE, rvt::XLARGE);
 
-	visual_tools.trigger();
+    visual_tools.trigger();
 
-	// Getting Basic Information
-	ROS_INFO_NAMED("tutorial", "Reference frame: %s", move_group.getPlanningFrame().c_str());
+    // Getting Basic Information
+    ROS_INFO_NAMED("tutorial", "Reference frame: %s", move_group.getPlanningFrame().c_str());
 
-	// We can also print the name of the end-effector link for this group.
-	ROS_INFO_NAMED("tutorial", "End effector link: %s", move_group.getEndEffectorLink().c_str());
+    // We can also print the name of the end-effector link for this group.
+    ROS_INFO_NAMED("tutorial", "End effector link: %s", move_group.getEndEffectorLink().c_str());
 
-	move_group.getCurrentState()->copyJointGroupPositions(joint_model_group, jv);
-	jn = joint_model_group->getJointModelNames();
-	for (size_t i = 0; i < jv.size(); ++i)
-		ROS_INFO("Joint %s: %f", jn[i].c_str(), jv[i]);
+    move_group.getCurrentState()->copyJointGroupPositions(joint_model_group, jv);
+    jn = joint_model_group->getJointModelNames();
+    for (size_t i = 0; i < jv.size(); ++i)
+        ROS_INFO("Joint %s: %f", jn[i].c_str(), jv[i]);
 
-	visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to start the demo");
+    visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to start the demo");
 
     moveit::planning_interface::MoveGroupInterface::Plan my_plan;
     planning_interface::MotionPlanRequest req;
@@ -97,8 +97,8 @@ int main(int argc, char ** argv)
         return 0;
     }
 
-	ros::Publisher display_publisher =
-	    nh.advertise<moveit_msgs::DisplayTrajectory>("/move_group/display_planned_path", 1, true);
+    ros::Publisher display_publisher =
+        nh.advertise<moveit_msgs::DisplayTrajectory>("/move_group/display_planned_path", 1, true);
     moveit_msgs::DisplayTrajectory display_trajectory;
 
     /* Visualize the trajectory */
@@ -108,16 +108,16 @@ int main(int argc, char ** argv)
  //    display_trajectory.trajectory_start = response.trajectory_start;
  //    display_trajectory.trajectory.push_back(response.trajectory);
  //    display_publisher.publish(display_trajectory);
-	// visual_tools.trigger();
-	// visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
+    // visual_tools.trigger();
+    // visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
 
     /* Fill plan */
     my_plan.start_state_ = response.trajectory_start;
     my_plan.trajectory_ = response.trajectory;
     my_plan.planning_time_ = response.planning_time;
-	move_group.execute(my_plan);
+    move_group.execute(my_plan);
 
-	robot_state::RobotState & robot_state = planning_scene->getCurrentStateNonConst();
+    robot_state::RobotState & robot_state = planning_scene->getCurrentStateNonConst();
     planning_scene->setCurrentState(response.trajectory_start);
     robot_state.setJointGroupPositions(joint_model_group, response.trajectory.joint_trajectory.points.back().positions);
 
@@ -153,16 +153,16 @@ int main(int argc, char ** argv)
  //    my_plan.start_state_ = response.trajectory_start;
  //    my_plan.trajectory_ = response.trajectory;
  //    my_plan.planning_time_ = response.planning_time;
-	// move_group.execute(my_plan);
+    // move_group.execute(my_plan);
 
-	// Visualisation
-	// ROS_INFO_NAMED("tutorial", "Visualizing plan 1 as trajectory line");
-	// visual_tools.publishAxisLabeled(pose.pose, "pose1");
-	// visual_tools.publishText(text_pose, "Pose Goal", rvt::WHITE, rvt::XLARGE);
-	// visual_tools.publishTrajectoryLine(my_plan.trajectory_, joint_model_group, rvt::RED);
-	// visual_tools.trigger();
-	// visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
+    // Visualisation
+    // ROS_INFO_NAMED("tutorial", "Visualizing plan 1 as trajectory line");
+    // visual_tools.publishAxisLabeled(pose.pose, "pose1");
+    // visual_tools.publishText(text_pose, "Pose Goal", rvt::WHITE, rvt::XLARGE);
+    // visual_tools.publishTrajectoryLine(my_plan.trajectory_, joint_model_group, rvt::RED);
+    // visual_tools.trigger();
+    // visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
 
-	return 1;
+    return 1;
 
 }
