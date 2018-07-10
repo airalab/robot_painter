@@ -24,6 +24,11 @@ include_directories(
 	${catkin_INCLUDE_DIRS}
 )
 
+add_executable(move_group_assembly test/move_group_assembly_test.cpp)
+target_link_libraries(move_group_assembly
+	${catkin_LIBRARIES}
+)
+
 add_executable(camera_test test/CameraTest.cpp)
 target_link_libraries(camera_test
 	${catkin_LIBRARIES}
