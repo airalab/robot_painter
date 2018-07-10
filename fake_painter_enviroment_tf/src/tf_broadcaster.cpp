@@ -2,6 +2,7 @@
 
 // TF
 #include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/static_transform_broadcaster.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/Transform.h>
 
@@ -86,7 +87,7 @@ int main(int argc, char ** argv)
     ros::NodeHandle nh;
 
     size_t rate = 5;
-    tf2_ros::TransformBroadcaster tf2_broadcaster;
+    tf2_ros::StaticTransformBroadcaster tf2_broadcaster;
     ros::Rate r(rate);
 
     ros::ServiceServer canvasServer = nh.advertiseService("request_canvas", canvasCallback);
