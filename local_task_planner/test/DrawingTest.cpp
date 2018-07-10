@@ -19,10 +19,15 @@
 #include <geometry_msgs/TransformStamped.h>
 
 
-#define DEBUG true
+#define DEBUG false
 // TODO try using TF as main linear math.
 
 size_t printedMarkers = 0;
+const double COLOR_BOTLE_HEIGHT = 0.06;
+const double COLOR_HEIGHT = 0.045;
+const double HEIGHT_OFFSET = COLOR_BOTLE_HEIGHT - COLOR_HEIGHT + 0.02;
+const double BRUSH_HEIGHT = 0.01;
+const double BRUSH_WIDTH = 0.01;
 
 visualization_msgs::Marker createMarkerMsg(std::vector<kuka_cv::Color> & colors, std::vector<kuka_cv::Pose> & poses) {
 
@@ -36,7 +41,7 @@ visualization_msgs::Marker createMarkerMsg(std::vector<kuka_cv::Color> & colors,
     visualization_msgs::Marker marker;
 
     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
-    marker.header.frame_id = "/canvas_link";
+    marker.header.frame_id = "canvas_link";
     marker.header.stamp = ros::Time::now();
 
     // Set the namespace and id for this marker.  This serves to create a unique ID
@@ -78,6 +83,8 @@ visualization_msgs::Marker createMarkerMsg(std::vector<kuka_cv::Color> & colors,
 
         marker.points.push_back(p);
         marker.colors.push_back(color);
+
+        ROS_INFO_STREAM("Marker pose:\t " << p.x << ", " << p.y << ", " << p.z);
     }
 
     return marker;
@@ -134,11 +141,43 @@ void publishMarkers(visualization_msgs::Marker & marker, size_t rate) {
     }
 }
 
-const double COLOR_BOTLE_HEIGHT = 0.06;
-const double COLOR_HEIGHT = 0.045;
-const double HEIGHT_OFFSET = COLOR_BOTLE_HEIGHT - COLOR_HEIGHT + 0.02;
-const double BRUSH_HEIGHT = 0.01;
-const double BRUSH_WIDTH = 0.01;
+void collectPaintOnBrush(KukaMoveit & manipulator, kuka_cv::Pose & pose)
+{
+    geometry_msgs::Pose p;
+
+    p.position.x = pose.x;
+    p.position.y = pose.y;
+    p.position.z = pose.z + COLOR_BOTLE_HEIGHT + HEIGHT_OFFSET;
+    p.orientation.w = 1;
+    manipulator.move(p, DEBUG);
+
+    p.position.z = pose.z + COLOR_HEIGHT - BRUSH_HEIGHT;
+    manipulator.move(p, DEBUG);
+
+    p.position.z = pose.z + COLOR_BOTLE_HEIGHT + HEIGHT_OFFSET;
+    manipulator.move(p, DEBUG);
+}
+
+void doSmear(KukaMoveit & manipulator, kuka_cv::Pose & pose)
+{
+    geometry_msgs::Pose p;
+
+    p.position.x = pose.x;
+    p.position.y = pose.y;
+    p.position.z = pose.z + HEIGHT_OFFSET;
+    p.orientation.w = 1;
+    manipulator.move(p, DEBUG);
+
+    p.position.z = pose.z;
+    manipulator.move(p, DEBUG);
+
+    p.position.x -= BRUSH_WIDTH;
+    manipulator.move(p, DEBUG);
+
+    p.position.z = pose.z + COLOR_BOTLE_HEIGHT + HEIGHT_OFFSET;
+    manipulator.move(p, DEBUG);
+
+}
 
 int main(int argc, char ** argv)
 {
@@ -195,8 +234,6 @@ int main(int argc, char ** argv)
     switch(part) {
         case 1: {
 
-            geometry_msgs::Pose palettePose;
-
             if (!ros::service::waitForService("request_palette", ros::Duration(3.0))) {
                 ROS_ERROR("Server request_palette is not active!");
                 ros::shutdown();
@@ -228,24 +265,12 @@ int main(int argc, char ** argv)
 
 
                 /* Motion action */
-                palettePose.position.x = palette.poses[i].x;
-                palettePose.position.y = palette.poses[i].y;
-                palettePose.position.z = palette.poses[i].z + COLOR_BOTLE_HEIGHT + HEIGHT_OFFSET;
-                palettePose.orientation.w = 1;
-                manipulator.move(palettePose);
-
-                palettePose.position.z = palette.poses[i].z + COLOR_HEIGHT - BRUSH_HEIGHT;
-                manipulator.move(palettePose);
-
-                palettePose.position.z = palette.poses[i].z + COLOR_BOTLE_HEIGHT + HEIGHT_OFFSET;
-                manipulator.move(palettePose);
+                collectPaintOnBrush(manipulator, palette.poses[i]);
             }
             break;
         }
 
         case 2: {
-
-            geometry_msgs::Pose canvasPose;
 
             ROS_INFO_STREAM("[LTP] Move to Canvas");
 
@@ -260,278 +285,181 @@ int main(int argc, char ** argv)
             } while (canvasInfo.response.width == 0 && ros::ok());
 
             /* Motion action */
-            canvasPose.position.x = canvasInfo.response.p.x;
-            canvasPose.position.y = canvasInfo.response.p.y;
-            canvasPose.position.z = canvasInfo.response.p.z + HEIGHT_OFFSET;
-            canvasPose.orientation.w = 1;
-            manipulator.move(canvasPose);
-
-            canvasPose.position.z = canvasInfo.response.p.z;
-            manipulator.move(canvasPose);
-
-            canvasPose.position.x -= BRUSH_WIDTH;
-            manipulator.move(canvasPose);
-
-            canvasPose.position.z = canvasInfo.response.p.z + COLOR_BOTLE_HEIGHT + HEIGHT_OFFSET;
-            manipulator.move(canvasPose);
+            doSmear(manipulator, canvasInfo.response.p);
 
             break;
         }
 
-        // case 3: {
-        //     std_srvs::Empty emptyMsg;
-        //     ROS_INFO_STREAM("[LTP] START image processing.");
-        //     if (startImgProcClient.call(emptyMsg)) {
-        //         ROS_INFO_STREAM("\t Successful");
-        //     } else {
-        //         ROS_ERROR_STREAM("\t ERROR");
-        //         return 0;
-        //     }
+        case 3: {
 
-        //     ROS_INFO_STREAM("[LTP] Request information about pixels Color and position");
-        //     if (imgPaletteClient.call(paletteInfo)) {
-        //         ROS_INFO_STREAM("\t Successful");
-        //     } else {
-        //         ROS_ERROR_STREAM("\t ERROR");
-        //     }
-        //     pictureColors = paletteInfo.response.colors;
-        //     pictureColorsPoses = paletteInfo.response.poses;
+            std_srvs::Empty emptyMsg;
+            ROS_INFO_STREAM("[LTP] START image processing.");
+            if (!startImgProcClient.call(emptyMsg)) {
+                ROS_ERROR_STREAM("\t ERROR");
+                return 0;
+            }
 
-        //     visualization_msgs::Marker marker = createMarkerMsg(pictureColors, pictureColorsPoses);
-        //     if (marker.points.empty()) {
-        //         ROS_FATAL_STREAM("Picture pre processing Error: Markers is empty!");
-        //         return 1;
-        //     }
+            ROS_INFO_STREAM("[LTP] Request information about pixels Color and position");
+            if (!imgPaletteClient.call(paletteInfo)) {
+                ROS_ERROR_STREAM("\t ERROR");
+                return 0;
+            }
+            pictureColors = paletteInfo.response.colors;
+            pictureColorsPoses = paletteInfo.response.poses;
 
-        //     canvasInfo.request.mode = 1;
-        //     ROS_INFO_STREAM("[LTP] Receive canvas message: ");
-        //     do {
-        //         if (canvasClient.call(canvasInfo)) {
-        //             ROS_INFO_STREAM("\t Successful");
-        //             break;
-        //         }
-        //         ROS_WARN_STREAM("[LTP] Receive wrong canvas info");
-        //     } while (canvasInfo.response.width == 0 && ros::ok());
+            visualization_msgs::Marker marker = createMarkerMsg(pictureColors, pictureColorsPoses);
+            if (marker.points.empty()) {
+                ROS_FATAL_STREAM("Picture pre processing Error: Markers is empty!");
+                return 1;
+            }
 
-        //     // Request canvas
-        //     geometry_msgs::TransformStamped transform;
-        //     transform.header.frame_id = "base_link";
-        //     transform.child_frame_id  = "canvas_link";
-        //     transform.transform.translation.x = canvasInfo.response.p.x;
-        //     transform.transform.translation.y = canvasInfo.response.p.y;
-        //     transform.transform.translation.z = canvasInfo.response.p.z;
+            canvasInfo.request.mode = 1;
+            ROS_INFO_STREAM("[LTP] Receive canvas message: ");
+            do {
+                if (canvasClient.call(canvasInfo)) {
+                    ROS_INFO_STREAM("\t Successful");
+                    break;
+                }
+                ROS_WARN_STREAM("[LTP] Receive wrong canvas info");
+            } while (canvasInfo.response.width == 0 && ros::ok());
 
-        //     tf2::Quaternion q;
-        //     q.setRPY(canvasInfo.response.p.phi, canvasInfo.response.p.psi, canvasInfo.response.p.theta);
-        //     transform.transform.rotation.x = q.x();
-        //     transform.transform.rotation.y = q.y();
-        //     transform.transform.rotation.z = q.z();
-        //     transform.transform.rotation.w = q.w();
+            ros::Rate r(1);
+            while (ros::ok()) {
 
-        //     // Create thread that publish canvas link while ros is ok
-        //     double rate = 1;
-        //     boost::thread thr(publishCanvasLink, transform, rate);
+                while (markerPublisher.getNumSubscribers() < 1)
+                {
+                    if (!ros::ok())
+                    {
+                        return 0;
+                    }
+                    ROS_WARN_ONCE("Please create a subscriber to the marker");
+                    sleep(1);
+                }
+                marker.header.stamp = ros::Time::now();
+                markerPublisher.publish(marker);
+                r.sleep();
+            }
+            // thr.join();
+            break;
 
-        //     ros::Rate r(1);
-        //     while (ros::ok()) {
+        }
 
-        //         while (markerPublisher.getNumSubscribers() < 1)
-        //         {
-        //           if (!ros::ok())
-        //           {
-        //             return 0;
-        //           }
-        //           ROS_WARN_ONCE("Please create a subscriber to the marker");
-        //           sleep(1);
-        //         }
-        //         markerPublisher.publish(marker);
-        //         r.sleep();
-        //     }
-        //     thr.join();
-        //     break;
-        // }
+        case 4: {
 
-        // case 4: {
-        //     ROS_INFO_STREAM("[LTP] Move to initial pose");
-        //     manipulator.moveArm(initiatlJV);
+            /* Palette info */
+            paletteInfo.request.mode = 1;
+            ROS_INFO_STREAM("[LTP] Receive palette message.");
+            do {
+                if (paletteClient.call(paletteInfo)) {
+                    palette = paletteInfo.response;
+                    break;
+                }
+                ROS_WARN_STREAM("[LTP] Receive Colors array size = 0");
+            } while ((palette.colors.empty() || palette.poses.empty()) && ros::ok());
 
-        //     paletteInfo.request.mode = 1;
-        //     ROS_INFO_STREAM("[LTP] Receive palette message.");
-        //     do {
-        //         if (paletteClient.call(paletteInfo)) {
-        //             ROS_INFO_STREAM("\t Successful");
-        //         }
-        //         palette = paletteInfo.response;
-        //         ROS_WARN_STREAM("[LTP] Receive Colors array size = 0");
-        //     } while ((palette.colors.empty() || palette.poses.empty()) && ros::ok());
+            /* Canvas info */
+            canvasInfo.request.mode = 1;
+            ROS_INFO_STREAM("[LTP] Receive canvas message: ");
+            do {
+                if (canvasClient.call(canvasInfo)) {
+                    break;
+                }
+                ROS_WARN_STREAM("[LTP] Receive wrong canvas info");
+            } while (canvasInfo.response.width == 0 && ros::ok());
 
-        //     canvasInfo.request.mode = 1;
-        //     ROS_INFO_STREAM("[LTP] Receive canvas message: ");
-        //     do {
-        //         if (canvasClient.call(canvasInfo)) {
-        //             ROS_INFO_STREAM("\t Successful");
-        //         }
-        //         ROS_WARN_STREAM("[LTP] Receive wrong canvas info");
-        //     } while (canvasInfo.response.width == 0 && ros::ok());
-        //                 // Request canvas
-        //     geometry_msgs::TransformStamped transform;
-        //     transform.header.frame_id = "base_link";
-        //     transform.child_frame_id  = "canvas_link";
-        //     transform.transform.translation.x = canvasInfo.response.p.x;
-        //     transform.transform.translation.y = canvasInfo.response.p.y;
-        //     transform.transform.translation.z = canvasInfo.response.p.z;
+            /* Image palette info */
+            ROS_INFO_STREAM("[LTP] Request information about pixels Color and position");
+            if (!imgPaletteClient.call(paletteInfo)) {
+                ROS_ERROR_STREAM("\t ERROR");
+                return 0;
+            }
+            pictureColors = paletteInfo.response.colors;
+            pictureColorsPoses = paletteInfo.response.poses;
 
-        //     tf2::Quaternion q;
-        //     q.setRPY(canvasInfo.response.p.phi, canvasInfo.response.p.psi, canvasInfo.response.p.theta);
-        //     transform.transform.rotation.x = q.x();
-        //     transform.transform.rotation.y = q.y();
-        //     transform.transform.rotation.z = q.z();
-        //     transform.transform.rotation.w = q.w();
-
-        //     // Create thread that publish canvas link while ros is ok
-        //     ROS_INFO_STREAM("Wait for transform /canvas_link");
-        //     double rate = 1;
-        //     boost::thread thrCnvs(publishCanvasLink, transform, rate);
-        //     ros::Duration(5).sleep();
-
-        //     ROS_INFO_STREAM("[LTP] Request information about pixels Color and position");
-        //     if (imgPaletteClient.call(paletteInfo)) {
-        //         ROS_INFO_STREAM("\t Successful");
-        //     } else {
-        //         ROS_ERROR_STREAM("\t ERROR");
-        //         // return 0;
-        //     }
-        //     pictureColors = paletteInfo.response.colors;
-        //     pictureColorsPoses = paletteInfo.response.poses;
-
-        //     ROS_INFO_STREAM("[LTP] Start Drawing...");
-        //     // Draw Params
-        //     bool isDraw = true;
-        //     bool updatePaint = true;
+            ROS_INFO_STREAM("[LTP] Start Drawing...");
+            // Draw Params
+            bool isDraw = true;
+            bool updatePaint = true;
 
 
-        //     visualization_msgs::Marker marker = createMarkerMsg(pictureColors, pictureColorsPoses);
+            visualization_msgs::Marker marker = createMarkerMsg(pictureColors, pictureColorsPoses);
 
-        //     size_t pxNum = pictureColors.size();
-        //     size_t paletteSize = palette.colors.size();
-        //     ROS_INFO_STREAM("[LTP] Points number: " << pxNum);
+            size_t pxNum = pictureColors.size();
+            size_t paletteSize = palette.colors.size();
+            ROS_INFO_STREAM("[LTP] Points number: " << pxNum);
 
-        //     rate = 3;
-        //     ros::Rate rt(0.5);
-        //     boost::thread thr(publishMarkers, marker, rate);
+            size_t rate = 3;
+            ros::Rate rt(0.5);
+            boost::thread thr(publishMarkers, marker, rate);
 
+            size_t swearsNumber = 0;
+            size_t currColorIndex = 0, prevColorIndex = 0;
 
-        //     geometry_msgs::TransformStamped transformStamped;
-        //     try{
-        //         for (size_t i = 0; i < 20; ++i) {
-        //             transformStamped = tfBuffer.lookupTransform("base_link", "canvas_link",
-        //                 ros::Time(0), ros::Duration(3));
-        //         }
-        //     }
-        //     catch (tf2::TransformException &ex) {
-        //         ROS_WARN("%s",ex.what());
-        //     } double yaw = 0, pitch = 0, roll = 0;
-        //     tf2::Quaternion canvasQ; tf2::Vector3 canvasV, picturePointV, pictureLocalV;
-        //     tf2::fromMsg(transformStamped.transform.rotation, canvasQ);
-        //     tf2::fromMsg(transformStamped.transform.translation, canvasV);
-        //     tf2::Matrix3x3 rotMatrix(canvasQ);
+            kuka_cv::Pose paintPoseInBase;
 
-        //     size_t count = 0;
-        //     size_t currColorIndex = 0, prevColorIndex = 0;
-        //     Pose poseForDrawing;
-        //     Pose palettePose;
+            // Color properties
+            // We must use one "ideal" brush for measuring alive time. Brush coefficient is equal 1
+            double aliveTime = 2;  // Number of swears for reduce color of paint to zero
+            double brushCoeff = 1;  // Brush coeff. that contain reduce color of paint to zero if we using not ideal brush
 
-        //     // Color properties
-        //     // We must use one "ideal" brush for measuring alive time. Brush coefficient is equal 1
-        //     double aliveTime = 10;  // Number of swears for reduce color of paint to zero
-        //     double brushCoeff = 1;  // Brush coeff. that contain reduce color of paint to zero if we using not ideal brush
+            // Global drawing circle
+            while (ros::ok() && isDraw) {
 
-        //     double paintingHeight = 0.05;   // Distance between brush and work ground
+                if (printedMarkers == pxNum) {
+                    ROS_ERROR("printedMarkers == pxNum");
+                    isDraw = false;
+                }
 
-        //     // Global drawing circle
-        //     while (ros::ok() && isDraw) {
+                // Find color in palette
+                prevColorIndex = currColorIndex;
+                while (currColorIndex < paletteSize &&
+                    (pictureColors[printedMarkers].r != palette.colors[currColorIndex].r ||
+                     pictureColors[printedMarkers].g != palette.colors[currColorIndex].g ||
+                     pictureColors[printedMarkers].b != palette.colors[currColorIndex].b))
+                {
+                    ++currColorIndex;
+                    ROS_INFO("Select color! (%lu | %lu)", paletteSize, currColorIndex);
+                }
+                ROS_WARN("Select color! (%lu | %lu)", paletteSize, currColorIndex);
 
-        //         if (printedMarkers == pxNum) {
-        //             ROS_ERROR("printedMarkers == pxNum");
-        //             isDraw = false;
-        //         }
+                if (currColorIndex == paletteSize) {
+                    currColorIndex = 0;
+                    continue;
+                } else if (currColorIndex > paletteSize) {
+                    ROS_ERROR_STREAM("Error of changing palette color.");
+                }
 
-        //         // Find color in palette
-        //         prevColorIndex = currColorIndex;
-        //         while (currColorIndex < paletteSize &&
-        //             (pictureColors[printedMarkers].r != palette.colors[currColorIndex].r ||
-        //              pictureColors[printedMarkers].g != palette.colors[currColorIndex].g ||
-        //              pictureColors[printedMarkers].b != palette.colors[currColorIndex].b))
-        //         {
-        //             ++currColorIndex;
-        //             ROS_INFO("Select color! (%d | %d)", paletteSize, currColorIndex);
-        //         }
-        //         ROS_WARN("Select color! (%d | %d)", paletteSize, currColorIndex);
+                if (DEBUG) {
+                    ROS_INFO_STREAM("Count: " << printedMarkers);
+                    ROS_INFO_STREAM("[COLOR] palette: ["
+                        << (uint)palette.colors[currColorIndex].b << ","
+                        << (uint)palette.colors[currColorIndex].g << ","
+                        << (uint)palette.colors[currColorIndex].r << "] vs ("
+                        << (uint)pictureColors[printedMarkers].b << ","
+                        << (uint)pictureColors[printedMarkers].g << ","
+                        << (uint)pictureColors[printedMarkers].r << ")");
+                }
 
-        //         if (currColorIndex == paletteSize) {
-        //             currColorIndex = 0;
-        //             continue;
-        //         } else if (currColorIndex > paletteSize) {
-        //             ROS_ERROR_STREAM("Error of changing palette color.");
-        //         }
+                if (swearsNumber >= aliveTime || swearsNumber == 0) {
+                    collectPaintOnBrush(manipulator, palette.poses[currColorIndex]);
+                    swearsNumber = 0;
+                }
 
-        //         if (DEBUG) {
-        //             ROS_INFO_STREAM("Count: " << printedMarkers);
-        //             ROS_INFO_STREAM("[COLOR] palette: ["
-        //                 << (uint)palette.colors[currColorIndex].b << ","
-        //                 << (uint)palette.colors[currColorIndex].g << ","
-        //                 << (uint)palette.colors[currColorIndex].r << "] vs ("
-        //                 << (uint)pictureColors[printedMarkers].b << ","
-        //                 << (uint)pictureColors[printedMarkers].g << ","
-        //                 << (uint)pictureColors[printedMarkers].r << ")");
-        //         }
-        //         // *** Local Control Circle
-        //         // ** Get the paint
-        //         // Move under the paints
-        //         palettePose.position(0) = palette.poses[currColorIndex].x;
-        //         palettePose.position(1) = palette.poses[currColorIndex].y;
-        //         palettePose.position(2) = palette.poses[currColorIndex].z;
-        //         palettePose.orientation(0) = palette.poses[currColorIndex].phi;
-        //         palettePose.orientation(1) = palette.poses[currColorIndex].theta;
-        //         palettePose.orientation(2) = palette.poses[currColorIndex].psi;
-        //         // palettePose.position -= zRotation(brushVector, -1.5708);
-        //         // palettePose.orientation(2) = 1.5708;
-        //         manipulator.moveArm(palettePose, config);
-
-        //         // Move to desired paint
-        //         palettePose.position(2) -= paintingHeight;
-        //         manipulator.moveArm(palettePose, config);
-        //         ros::Duration(0.5).sleep();
-
-        //         // ** Draw the paint
-        //         // Move under canvas
-        //         pictureLocalV = tf2::Vector3(pictureColorsPoses[printedMarkers].x, pictureColorsPoses[printedMarkers].y, pictureColorsPoses[printedMarkers].z);
-        //         picturePointV = rotMatrix*pictureLocalV + canvasV;
-
-        //         poseForDrawing.position(0) = picturePointV.m_floats[0];
-        //         poseForDrawing.position(1) = picturePointV.m_floats[1];
-        //         poseForDrawing.position(2) = picturePointV.m_floats[2] + paintingHeight;
-        //         // poseForDrawing.position -= zRotation(brushVector, 1.5708);
-        //         poseForDrawing.orientation(2) = -1.5708;
-        //         if (DEBUG) {
-        //             ROS_INFO_STREAM("[POINT] transform: (" << poseForDrawing.position(0)
-        //                 << ", " << poseForDrawing.position(1)
-        //                 << ", " << poseForDrawing.position(2) << ")");
-        //         }
-        //         manipulator.moveArm(poseForDrawing, config);
+                paintPoseInBase.x = pictureColorsPoses[printedMarkers].x + canvasInfo.response.p.x;
+                paintPoseInBase.y = pictureColorsPoses[printedMarkers].y + canvasInfo.response.p.y;
+                paintPoseInBase.z = pictureColorsPoses[printedMarkers].z + canvasInfo.response.p.z;
+                doSmear(manipulator, paintPoseInBase);
 
 
-        //         // Paint the color
-        //         poseForDrawing.position(2) -= paintingHeight;
-        //         manipulator.moveArm(poseForDrawing, config);
-        //         ++printedMarkers;
-        //         thr.interrupt();
-        //         ros::Duration(1).sleep();
+                ++printedMarkers;
+                ++swearsNumber;
+                thr.interrupt();
+                ros::Duration(1).sleep();
 
-        //         rt.sleep();
-        //     }
-        //     thr.join();
-        // }
+                rt.sleep();
+            }
+            thr.join();
+        }
     }
     return 0;
 }
