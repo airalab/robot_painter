@@ -9,6 +9,13 @@ bool start = false;
 
 geometry_msgs::Pose pose;
 
+const double x_min = 0.1;
+const double x_max = 0.8;
+const double y_min = -0.4;
+const double y_max = 0.4;
+const double z_min = 0.2;
+const double z_max = 0.6;
+
 void poseCallback(const geometry_msgs::Pose::ConstPtr & msg)
 {
     pose.position = msg->position;
@@ -27,6 +34,18 @@ int main(int argc, char ** argv)
     ros::Subscriber poseSubscriber = nh.subscribe(topicName, 10, poseCallback);
 
     KukaMoveit manipulator("manipulator");
+
+    /* Set joint constraints */
+
+    moveit_msgs::Constraints constraints;
+    constraints.joint_constraints.resize(1);
+    constraints.joint_constraints[0].joint_name = "joint_a1";
+    constraints.joint_constraints[0].position = 0.0;
+    constraints.joint_constraints[0].tolerance_above = 0.6;
+    constraints.joint_constraints[0].tolerance_below = 0.6;
+    constraints.joint_constraints[0].weight = 1.0;
+    manipulator.getMoveGroup()->setPathConstraints(constraints);
+
 
     while (nh.ok()) {
 

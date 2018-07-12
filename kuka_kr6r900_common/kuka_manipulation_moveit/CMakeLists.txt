@@ -28,6 +28,9 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 add_executable(paat test/PushAndUpActionTest.cpp)
 target_link_libraries(paat ${PROJECT_NAME})
 
+add_executable(move_arm test/MoveArm.cpp)
+target_link_libraries(move_arm ${PROJECT_NAME})
+
 install(TARGETS ${PROJECT_NAME}
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

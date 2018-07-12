@@ -24,6 +24,11 @@ class KukaMoveit
         bool move(const geometry_msgs::Pose & pose, bool showPath = true);
         bool move(const std::string name, bool showPath = true);
 
+        inline moveit::planning_interface::MoveGroupInterface * getMoveGroup()
+        {
+            return &move_group;
+        }
+
     private:
 
         void configure();

@@ -25,7 +25,9 @@
 // TODO try using TF as main linear math.
 
 bool start = false;
-size_t printedMarkers = 60;
+size_t printedMarkers = 0;
+tf2::Matrix3x3 R;
+tf2::Vector3 v;
 const double COLOR_BOTLE_HEIGHT = 0.06;
 const double COLOR_HEIGHT = 0.045;
 const double HEIGHT_OFFSET = COLOR_BOTLE_HEIGHT - COLOR_HEIGHT + 0.02;
@@ -159,6 +161,7 @@ void collectPaintOnBrush(KukaMoveit & manipulator, kuka_cv::Pose & pose)
     manipulator.move(p, DEBUG);
 }
 
+
 void doSmear(KukaMoveit & manipulator, kuka_cv::Pose & pose)
 {
     geometry_msgs::Pose p;
@@ -181,6 +184,21 @@ void doSmear(KukaMoveit & manipulator, kuka_cv::Pose & pose)
     p.position.z = pose.z + COLOR_BOTLE_HEIGHT + HEIGHT_OFFSET;
     manipulator.move(p, DEBUG);
 
+}
+
+void transformPointFromCanvasToBase(kuka_cv::Pose & pose) {
+
+    // Transform:
+    // R*p + v
+    // R - canvas transform matrix, v - translation or canvas frame, p - painting point
+
+    tf2::Vector3 result, p(pose.x, pose.y, pose.z);
+    result = R*p + v;
+
+    pose.x = result.m_floats[0];
+    pose.y = result.m_floats[1];
+    pose.z = result.m_floats[2];
+    pose.phi = 0; pose.theta = 0; pose.psi = 0;
 }
 
 void chatterCallback(const std_msgs::String::ConstPtr& msg)
@@ -210,6 +228,26 @@ int main(int argc, char ** argv)
 
     // Initialize manipulator
     KukaMoveit manipulator("manipulator");
+
+    /* Set joint constraints */
+
+    // Joint a1
+    moveit_msgs::Constraints constraints;
+    constraints.joint_constraints.resize(2);
+    constraints.joint_constraints[0].joint_name = "joint_a1";
+    constraints.joint_constraints[0].position = 0.0;
+    constraints.joint_constraints[0].tolerance_above = 1;
+    constraints.joint_constraints[0].tolerance_below = 1;
+    constraints.joint_constraints[0].weight = 1.0;
+
+    // Joint a4
+    constraints.joint_constraints[1].joint_name = "joint_a4";
+    constraints.joint_constraints[1].position = 0.0;
+    constraints.joint_constraints[1].tolerance_above = 1;
+    constraints.joint_constraints[1].tolerance_below = 1;
+    constraints.joint_constraints[1].weight = 1.0;
+
+    manipulator.getMoveGroup()->setPathConstraints(constraints);
 
     kuka_cv::RequestPalette::Response palette;
     kuka_cv::RequestPalette paletteInfo;
@@ -241,6 +279,8 @@ int main(int argc, char ** argv)
                 }
                 ROS_WARN_STREAM("[LTP] Receive wrong canvas info");
             } while (canvasInfo.response.width == 0 && ros::ok());
+            R.setRPY(canvasInfo.response.p.phi, canvasInfo.response.p.theta, canvasInfo.response.p.psi);
+            v = tf2::Vector3(canvasInfo.response.p.x, canvasInfo.response.p.y, canvasInfo.response.p.z);
 
             /* Image palette info */
             std_srvs::Empty emptyMsg;
@@ -275,8 +315,6 @@ int main(int argc, char ** argv)
 
             size_t swearsNumber = 0;
             size_t currColorIndex = 0, prevColorIndex = 0;
-
-            kuka_cv::Pose paintPoseInBase;
 
             // Color properties
             // We must use one "ideal" brush for measuring alive time. Brush coefficient is equal 1
@@ -326,10 +364,8 @@ int main(int argc, char ** argv)
                     swearsNumber = 0;
                 }
 
-                paintPoseInBase.x = pictureColorsPoses[printedMarkers].x + canvasInfo.response.p.x;
-                paintPoseInBase.y = pictureColorsPoses[printedMarkers].y + canvasInfo.response.p.y;
-                paintPoseInBase.z = pictureColorsPoses[printedMarkers].z + canvasInfo.response.p.z;
-                doSmear(manipulator, paintPoseInBase);
+                transformPointFromCanvasToBase(pictureColorsPoses[printedMarkers]);
+                doSmear(manipulator, pictureColorsPoses[printedMarkers]);
 
                 ROS_INFO_STREAM("[LTP] POINT (" << printedMarkers << ")");
                 ++printedMarkers;
