@@ -31,6 +31,10 @@ target_link_libraries(paat ${PROJECT_NAME})
 add_executable(move_arm test/MoveArm.cpp)
 target_link_libraries(move_arm ${PROJECT_NAME})
 
+add_executable(round_traj test/RoundTrajectoryTest.cpp)
+target_link_libraries(round_traj ${PROJECT_NAME})
+
+
 install(TARGETS ${PROJECT_NAME}
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
