@@ -58,6 +58,10 @@ bool KR6KinematicsPlugin::getPositionIK(const geometry_msgs::Pose &ik_pose,
                                     const kinematics::KinematicsQueryOptions &options) const
 {
 
+    // std::cout << "Receive pose: " << std::endl;
+    // std::cout << "\t p: [" << ik_pose.position.x << ", " << ik_pose.position.y << ", " << ik_pose.position.z << " | "
+    //  << ik_pose.orientation.x << ", " << ik_pose.orientation.y << ", " << ik_pose.orientation.z << ", " << ik_pose.orientation.w  << "]" << std::endl;
+
     // Check if the initialize function has already been called successfully
     if (!kinematics) return false;
 
@@ -70,7 +74,7 @@ bool KR6KinematicsPlugin::getPositionIK(const geometry_msgs::Pose &ik_pose,
     std::vector<JointValues> solutions;
     int res = kinematics->getAllIKSolutions(targetPose, solutions);
 
-    if (res == 0) {
+    if (res == 2) {
         error_code.val = moveit_msgs::MoveItErrorCodes::NO_IK_SOLUTION;
         return false;
     }
@@ -167,6 +171,7 @@ const std::vector<std::string> & KR6KinematicsPlugin::getLinkNames() const
 
 std::vector<double> KR6KinematicsPlugin::selectIKSolution(const std::vector<JointValues> & solutions, const JointValues & initialState) const
 {
+
     std::vector<std::vector<double>> solutionsVector(solutions.size());
     for (size_t i = 0; i < solutions.size(); ++i)
         solutionsVector[i] = configurationJvToMsg(solutions[i]);
@@ -239,8 +244,8 @@ Pose KR6KinematicsPlugin::poseMsgToMatrix(const geometry_msgs::Pose & p) const
 
     Pose pose;
     matrix::Euler<double> angles (
-        matrix::Quaternion<double> (p.orientation.x, p.orientation.y,
-                                    p.orientation.z, p.orientation.w)
+        matrix::Quaternion<double> (p.orientation.w, p.orientation.x,
+                                    p.orientation.y, p.orientation.z)
     );
 
     pose.position(0) = p.position.x;

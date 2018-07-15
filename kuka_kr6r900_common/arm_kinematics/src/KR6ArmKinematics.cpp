@@ -3,7 +3,7 @@
 
 using namespace kr6_arm_kinematics;
 
-#define KINEMATIC_DEBUG true
+#define KINEMATIC_DEBUG false
 
 Kinematics::Kinematics(const std::vector<double> & minAngles, const std::vector<double> & maxAngles)
 {
@@ -43,8 +43,8 @@ int Kinematics::getAllIKSolutions(const Pose & pose, std::vector<JointValues> & 
     std::vector<std::vector<double>> config = {{0, 1, 1}, {0, 1, -1}, {0, -1, 1}, {0, -1, -1},
     {M_PI, 1, 1}, {M_PI, 1, -1}, {M_PI, -1, 1}, {M_PI, -1, -1}};
 
-    if (solutions.size() != 0)
-        return 2; // Invalid initial size of solutions vector
+    // if (solutions.size() != 0)
+        // return 3; // Invalid initial size of solutions vector
 
     for (int i = 0; i < 8; ++i) {
         if (!IK(pose, config[i], solution)) continue;
@@ -61,8 +61,13 @@ bool Kinematics::IK(const Pose & pose, const std::vector<double> & configuration
 {
 
     if (configuration.size() != 3) {
-        if (KINEMATIC_DEBUG)
+        if (KINEMATIC_DEBUG) {
+            std::cerr << "---------------- (error)" << std::endl;
             std::cerr << "Invalid configuration paramters, array size" << configuration.size() << std::endl;
+            std::cerr << "Pose: [" << pose.position(0) << ", " << pose.position(1) << ", " << pose.position(2) << " | "
+                << pose.orientation(0) << ", " << pose.orientation(1) << ", " << pose.orientation(2) << "]" << std::endl;
+            std::cerr << "----------------" << std::endl;
+        }
         return false;
     }
 
@@ -84,8 +89,13 @@ bool Kinematics::IK(const Pose & pose, const std::vector<double> & configuration
         if (q1 > M_PI + minJointAngles[0]) q1 -= configuration[0];
         else if (q1 < maxJointAngles[0] - M_PI) q1 += configuration[0];
         else {
-            if (KINEMATIC_DEBUG)
+            if (KINEMATIC_DEBUG) {
+                std::cerr << "---------------- (error)" << std::endl;
                 std::cerr << "Solution with configuration: (" << configuration[0] << ", " << configuration[1] << ", " << configuration[2] << ") is NOT exist." << std::endl;
+                std::cerr << "Pose: [" << pose.position(0) << ", " << pose.position(1) << ", " << pose.position(2) << " | "
+                    << pose.orientation(0) << ", " << pose.orientation(1) << ", " << pose.orientation(2) << "]" << std::endl;
+                std::cerr << "----------------" << std::endl;
+            }
             return false;
         }
     }
@@ -102,8 +112,13 @@ bool Kinematics::IK(const Pose & pose, const std::vector<double> & configuration
     cosAng = (planePos(0)*planePos(0) + planePos(2)*planePos(2) - d2*d2 - d*d)/(2*d2*d);
 
     if (cosAng > 1) {
-        if (KINEMATIC_DEBUG)
+        if (KINEMATIC_DEBUG) {
+            std::cerr << "---------------- (error)" << std::endl;
             std::cerr << "Solution with configuration: (" << configuration[0] << ", " << configuration[1] << ", " << configuration[2] << ") is NOT exist. Cosine of angle > 1." << std::endl;
+            std::cerr << "Pose: [" << pose.position(0) << ", " << pose.position(1) << ", " << pose.position(2) << " | "
+                << pose.orientation(0) << ", " << pose.orientation(1) << ", " << pose.orientation(2) << "]" << std::endl;
+            std::cerr << "----------------" << std::endl;
+        }
         return false;
     }
 
@@ -128,7 +143,7 @@ bool Kinematics::IK(const Pose & pose, const std::vector<double> & configuration
     bool valid = checkAngles(solution);
     if (valid == false) {
         if (KINEMATIC_DEBUG)
-            std::cout << "Solution not valid. Anglse out of range. Configuration: " << configuration[0] << ", " << configuration[1] << ", " << configuration[2] << std::endl;
+            std::cout << "Solution not valid. Angles out of range. Configuration: " << configuration[0] << ", " << configuration[1] << ", " << configuration[2] << std::endl;
         return false;
     }
 
