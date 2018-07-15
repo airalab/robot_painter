@@ -6,7 +6,6 @@ add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
     arm_kinematics
-    arm_manipulation
     kuka_cv
     brics_actuator
     roscpp
@@ -30,10 +29,10 @@ target_link_libraries(drawing
     ${catkin_LIBRARIES}
 )
 
-add_executable(camera_test test/CameraTest.cpp)
-target_link_libraries(camera_test
-    ${catkin_LIBRARIES}
-)
+# add_executable(camera_test test/CameraTest.cpp)
+# target_link_libraries(camera_test
+#     ${catkin_LIBRARIES}
+# )
 
 add_executable(drawing_test test/DrawingTest.cpp)
 target_link_libraries(drawing_test

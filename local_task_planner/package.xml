@@ -50,18 +50,15 @@
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>arm_kinematics</build_depend>
-  <build_depend>arm_manipulation</build_depend>
   <build_depend>kuka_cv</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>brics_actuatro</build_depend>
   <build_depend>tf2</build_depend>
   <build_depend>tf2_ros</build_depend>
   <build_export_depend>arm_kinematics</build_export_depend>
-  <build_export_depend>arm_manipulation</build_export_depend>
   <build_export_depend>kuka_cv</build_export_depend>
   <build_export_depend>roscpp</build_export_depend>
   <exec_depend>arm_kinematics</exec_depend>
-  <exec_depend>arm_manipulation</exec_depend>
   <exec_depend>kuka_cv</exec_depend>
   <exec_depend>roscpp</exec_depend>
   <exec_depend>brics_actuator</exec_depend>
