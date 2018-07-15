@@ -24,8 +24,8 @@
   <run_depend>joint_state_publisher</run_depend>
   <run_depend>robot_state_publisher</run_depend>
   <run_depend>xacro</run_depend>
-  <!-- This package is referenced in the warehouse launch files, but does not build out of the box at the moment. Commented the dependency until this works. -->
-  <!-- <run_depend>warehouse_ros_mongo</run_depend> -->
+  <run_depend>kr6_kinematics_plugin</run_depend>
+
   <build_depend>kuka_kr6_support</build_depend>
   <run_depend>kuka_kr6_support</run_depend>
 

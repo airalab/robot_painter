@@ -5,15 +5,35 @@
 #include "DataTypes.h"
 #include <vector>
 
-class KR6ArmKinematics {
-    public:
-        Vector3d solveFK(const JointValues & jointValues);
-        bool solveIK(const Pose & pose, const std::vector<double> & configuration, JointValues & solution);
-        bool checkAngles(const JointValues & jointValues);
-        
-    private:
-        matrix::Matrix<double, 3, 3> calcRotMatix(const double alpha, const double beta, const double gamma);
+namespace kr6_arm_kinematics
+{
 
+class Kinematics {
+
+    public:
+
+        Kinematics(const std::vector<double> & minAngles, const std::vector<double> & maxAngles);
+        ~Kinematics();
+
+        // Forward kinematics
+        Vector3d FK(const JointValues & jointValues);
+
+        // Inverse kinematics for one configuration
+        bool IK(const Pose & pose, const std::vector<double> & configuration, JointValues & solution);
+
+        // Incerse kinematics for all possible configurations
+        int getAllIKSolutions(const Pose & pose, std::vector<JointValues> & solutions);
+
+
+
+    private:
+        matrix::Dcm<double> calcRotMatix(const double phi, const double theta, const double psi);
+
+        bool checkAngles(const JointValues & jointValues);
+
+        JointValues minAng, maxAng;
 };
+
+}
 
 #endif

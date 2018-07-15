@@ -5,7 +5,7 @@ project(arm_kinematics)
 add_compile_options(-std=c++11)
 
 
-find_package(catkin REQUIRED)
+find_package(catkin REQUIRED COMPONENTS geometry_msgs)
 
 catkin_package(
     INCLUDE_DIRS include
@@ -14,17 +14,20 @@ catkin_package(
 
 include_directories(
     include
+    ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
 add_library(${PROJECT_NAME}
     src/KR6ArmKinematics.cpp
 )
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 add_executable(test_k test/KinematicTest.cpp src/KR6ArmKinematics.cpp)
+target_link_libraries(${PROJECT_NAME})
 
 ## Mark executables and/or libraries for installation
-install(TARGETS ${PROJECT_NAME} 
+install(TARGETS ${PROJECT_NAME}
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
