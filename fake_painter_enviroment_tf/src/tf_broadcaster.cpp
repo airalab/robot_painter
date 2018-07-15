@@ -38,7 +38,7 @@ geometry_msgs::TransformStamped getCanvasTransform()
     canvasTransform.child_frame_id = "canvas_link";
     canvasTransform.transform.translation.x = px;
     canvasTransform.transform.translation.y = py;
-    canvasTransform.transform.translation.z = -(A*px + B*px + D)/C;
+    canvasTransform.transform.translation.z = -(A*px + B*py + D)/C;
     canvasTransform.transform.rotation.x = qx;
     canvasTransform.transform.rotation.y = qy;
     canvasTransform.transform.rotation.z = qz;

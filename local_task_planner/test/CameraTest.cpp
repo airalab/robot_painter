@@ -519,9 +519,9 @@ int main(int argc, char ** argv)
                      pictureColors[printedMarkers].b != palette.colors[currColorIndex].b))
                 {
                     ++currColorIndex;
-                    ROS_INFO("Select color! (%d | %d)", paletteSize, currColorIndex);
+                    ROS_INFO("Select color! (%lu | %lu)", paletteSize, currColorIndex);
                 }
-                ROS_WARN("Select color! (%d | %d)", paletteSize, currColorIndex);
+                ROS_WARN("Select color! (%lu | %lu)", paletteSize, currColorIndex);
 
                 if (currColorIndex == paletteSize) {
                     currColorIndex = 0;
