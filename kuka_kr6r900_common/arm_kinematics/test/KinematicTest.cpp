@@ -3,13 +3,18 @@
 
 int main(int argc, const char *argv[])
 {
-    KR6ArmKinematics kinematics;
-    JointValues jv;
-    jv(1) = -M_PI/2;
-    jv(2) = M_PI/2;
+    kr6_arm_kinematics::Kinematics kinematics(minJointAngles, maxJointAngles);
+    std::vector<JointValues> solutions;
 
-    Vector3d pos = kinematics.solveFK(jv);
-    Vector3d orient;
+    // Set position
+    Vector3d pos(0.647132, 0.210288, 0.663268);
+
+    // Set orientation by quaternion
+    matrix::Euler<double> ang(matrix::Quaternion<double> (1, 0, 0, 0));
+    // Vector3d orient(ang.phi(), ang.theta(), ang.psi());
+    Vector3d orient(0, 0, 0);
+    ang.print();
+
     Pose pose;
     pose.position = pos;
     pose.orientation = orient;
@@ -17,18 +22,22 @@ int main(int argc, const char *argv[])
     Vector3d pos1;
     JointValues sol;
 
-    std::vector<std::vector<double>> config = {{0, 1, 1}, {0, 1, -1}, {0, -1, 1}, {0, -1, -1}, 
-        {M_PI, 1, 1}, {M_PI, 1, -1}, {M_PI, -1, 1}, {M_PI, -1, -1}};
-                                             
-    for (int i = 0; i < 8; ++i) {
-        std::cout << "Configuration: " << config[i][0] << ", " << config[i][1] << ", " << config[i][2] << std::endl;
+
+    int result = kinematics.getAllIKSolutions(pose, solutions);
+    if (result = 2) {
+        std::cout << ("No solutions found") << std::endl;
+    }
+
+    for (int i = 0; i < solutions.size(); ++i) {
+
+        sol = solutions[i];
+
         std::cout << "=================================================" << std::endl;
-        if (!kinematics.solveIK(pose, config[i], sol)) continue;
 
         std::cout << "Position: " << pos(0) << ", " << pos(1) << ", " << pos(2) << std::endl;
         std::cout << "Angles: " << sol(0) << ", " << sol(1) << ", " << sol(2) << ", " << sol(3) << ", " << sol(4) << ", " << sol(5) << std::endl;
 
-        pos1 = kinematics.solveFK(sol);
+        pos1 = kinematics.FK(sol);
         std::cout << "test Position: " << pos1(0) << ", " << pos1(1) << ", " << pos1(2) << std::endl << std::endl;
     }
     return 0;

@@ -1,4 +1,5 @@
+int8 mode
 ---
-geometry_msgs/Transform trans
+Pose p
 float64 width
 float64 height

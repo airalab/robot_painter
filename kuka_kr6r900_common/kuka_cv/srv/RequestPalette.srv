@@ -1,2 +1,4 @@
+int8 mode
 ---
-Colour[] colours
+Color[] colors
+Pose[] poses
