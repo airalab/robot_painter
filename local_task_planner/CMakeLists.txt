@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
     moveit_visual_tools
     moveit_msgs
     kuka_manipulation_moveit
+    rosbag
 )
 
 catkin_package()
@@ -26,6 +27,11 @@ include_directories(
 
 add_executable(drawing src/Drawing.cpp)
 target_link_libraries(drawing
+    ${catkin_LIBRARIES}
+)
+
+add_executable(trajectory_drawing test/DrawingByTrajectorysTest.cpp)
+target_link_libraries(trajectory_drawing
     ${catkin_LIBRARIES}
 )
 
