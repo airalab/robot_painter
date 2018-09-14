@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
     moveit_visual_tools
     moveit_msgs
     kuka_manipulation_moveit
+    rosbag
 )
 
 catkin_package()
@@ -29,27 +30,32 @@ target_link_libraries(drawing
     ${catkin_LIBRARIES}
 )
 
+add_executable(trajectory_drawing test/DrawingByTrajectorysTest.cpp)
+target_link_libraries(trajectory_drawing
+    ${catkin_LIBRARIES}
+)
+
 # add_executable(camera_test test/CameraTest.cpp)
 # target_link_libraries(camera_test
 #     ${catkin_LIBRARIES}
 # )
 
-add_executable(drawing_test test/DrawingTest.cpp)
-target_link_libraries(drawing_test
-    ${catkin_LIBRARIES}
-)
+# add_executable(drawing_test test/DrawingTest.cpp)
+# target_link_libraries(drawing_test
+#     ${catkin_LIBRARIES}
+# )
 
-add_executable(moveit_ik_test test/moveit_ik_test.cpp)
-target_link_libraries(moveit_ik_test
-    ${catkin_LIBRARIES}
-)
+# add_executable(moveit_ik_test test/moveit_ik_test.cpp)
+# target_link_libraries(moveit_ik_test
+#     ${catkin_LIBRARIES}
+# )
 
-add_executable(move_group_test test/move_group_test.cpp)
-target_link_libraries(move_group_test
-    ${catkin_LIBRARIES}
-)
+# add_executable(move_group_test test/move_group_test.cpp)
+# target_link_libraries(move_group_test
+#     ${catkin_LIBRARIES}
+# )
 
-add_executable(move_group_assembly test/move_group_assembly_test.cpp)
-target_link_libraries(move_group_assembly
-    ${catkin_LIBRARIES}
-)
+# add_executable(move_group_assembly test/move_group_assembly_test.cpp)
+# target_link_libraries(move_group_assembly
+#     ${catkin_LIBRARIES}
+# )
