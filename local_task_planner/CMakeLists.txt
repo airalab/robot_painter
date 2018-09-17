@@ -35,6 +35,15 @@ target_link_libraries(trajectory_drawing
     ${catkin_LIBRARIES}
 )
 
+add_executable(draw_workspace src/DrawCanvasSquare.cpp)
+target_link_libraries(draw_workspace
+    ${catkin_LIBRARIES}
+)
+
+add_executable(calibrate_tool src/CalibrateTool.cpp)
+target_link_libraries(calibrate_tool
+    ${catkin_LIBRARIES}
+)
 # add_executable(camera_test test/CameraTest.cpp)
 # target_link_libraries(camera_test
 #     ${catkin_LIBRARIES}
