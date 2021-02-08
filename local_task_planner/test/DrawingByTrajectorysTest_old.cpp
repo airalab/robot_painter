@@ -5,7 +5,6 @@
 #include <kuka_cv/Color.h>
 #include <kuka_cv/RequestPalette.h>
 #include <kuka_cv/RequestCanvas.h>
-#include <local_task_planner/TextConverterService.h>
 #include <std_srvs/Empty.h>
 #include <visualization_msgs/Marker.h>
 #include <boost/thread/thread.hpp>
@@ -37,17 +36,22 @@ bool start = false;
 size_t printedMarkers = 0;
 tf2::Matrix3x3 R;
 tf2::Vector3 v;
+//const double COLOR_BOTLE_HEIGHT = 0.06;
+//const double COLOR_HEIGHT = 0.045;
+//const double HEIGHT_OFFSET = COLOR_BOTLE_HEIGHT - COLOR_HEIGHT + 0.02;
+//const double BRUSH_HEIGHT = 0.01;
+//const double BRUSH_WIDTH = 0.01;
+
+//testing
 const double COLOR_BOTLE_HEIGHT = 0.08;
 const double COLOR_HEIGHT = 0.038;
 const double HEIGHT_OFFSET = 0.02;
-const double BRUSH_HEIGHT = 0.215; //from j6 center
+const double BRUSH_HEIGHT = 0.215;//from j6 center
 const double BRUSH_WIDTH = 0.01;
 
 
 const std::string BAG_FILE_PATH = ros::package::getPath("picture_preprocessing") + "/data/test.bag";
 const std::string TRAJECTORY_TOPIC_NAME = "/path";
-
-local_task_planner::TextConverterService Word;
 
 void collectPaintOnBrush(KukaMoveit & manipulator, geometry_msgs::Pose & pose)
 {
@@ -55,13 +59,16 @@ void collectPaintOnBrush(KukaMoveit & manipulator, geometry_msgs::Pose & pose)
 
     p.position.x = pose.position.x;
     p.position.y = pose.position.y;
+    //p.position.z = pose.position.z + COLOR_BOTLE_HEIGHT + HEIGHT_OFFSET;
     p.position.z = pose.position.z + COLOR_BOTLE_HEIGHT + HEIGHT_OFFSET + BRUSH_HEIGHT;
     p.orientation.w = 1;
     manipulator.move(p, DEBUG);
 
-    p.position.z = pose.position.z + COLOR_HEIGHT + BRUSH_HEIGHT;
+    //p.position.z = pose.position.z + COLOR_HEIGHT - BRUSH_HEIGHT
+    p.position.z = pose.position.z + COLOR_HEIGHT + BRUSH_HEIGHT - 0.003;
     manipulator.move(p, DEBUG);
 
+    //p.position.z = pose.position.z + COLOR_BOTLE_HEIGHT + HEIGHT_OFFSET;
     p.position.z = pose.position.z + COLOR_BOTLE_HEIGHT + HEIGHT_OFFSET + BRUSH_HEIGHT;
     manipulator.move(p, DEBUG);
 }
@@ -148,10 +155,9 @@ std::vector<geometry_msgs::PoseArray> readBagFile(const std::string filepath, co
     return trajectoryArray;
 }
 
-void chatterCallback(const std_msgs::String msg)
+void chatterCallback(const std_msgs::String::ConstPtr& msg)
 {
-    ROS_INFO("I heard: [%s]", msg.data.c_str());
-    Word.request.data = msg.data;
+    ROS_INFO("I heard: [%s]", msg->data.c_str());
     start = true;
 }
 
@@ -166,7 +172,7 @@ int main(int argc, char ** argv)
     // Service client
     ros::ServiceClient paletteClient = nh.serviceClient<kuka_cv::RequestPalette>("/request_palette");
     ros::ServiceClient canvasClient = nh.serviceClient<kuka_cv::RequestCanvas>("/request_canvas");
-    ros::ServiceClient startImgProcClient = nh.serviceClient<local_task_planner::TextConverterService>("/convert_text");
+    ros::ServiceClient startImgProcClient = nh.serviceClient<std_srvs::Empty>("/convert_text");
 
     /* AIRA Stack */
     ros::Subscriber runSubscriber = nh.subscribe("run", 10, chatterCallback);
@@ -201,11 +207,6 @@ int main(int argc, char ** argv)
 
     while(ros::ok()) {
         if (start) {
-
-	    /*send info string to server*/
-	    startImgProcClient.call(Word);
-
-
             /* Palette info */
             paletteInfo.request.mode = 0;
             ROS_INFO_STREAM("[LTP] Receive palette message.");
@@ -265,15 +266,10 @@ int main(int argc, char ** argv)
             /* Image palette info */
             std_srvs::Empty emptyMsg;
             ROS_INFO_STREAM("[LTP] START image processing.");
-
-
-
-            /*if (!startImgProcClient.call(emptyMsg)) {
+            if (!startImgProcClient.call(emptyMsg)) {
                 ROS_ERROR_STREAM("\t ERROR");
                 return 0;
-            }*/
-
-
+            }
             // TODO Add rosbag file read function
             std::vector<geometry_msgs::PoseArray> trajectorys = readBagFile(BAG_FILE_PATH, TRAJECTORY_TOPIC_NAME);
 
@@ -295,8 +291,8 @@ int main(int argc, char ** argv)
             // Global drawing circle
             collectPaintOnBrush(manipulator, colorPose);
             while (ros::ok() && isDraw) {
+
                 if (currentSmearNumber == numberOfSmears) {
-                //if (currentSmearNumber == numberOfSmears) {
                     ROS_ERROR("Drawing image complete");
                     isDraw = false;
                     break;
@@ -308,12 +304,13 @@ int main(int argc, char ** argv)
 
                 ROS_INFO_STREAM("[LTP] POINT (" << currentSmearNumber << ")");
                 ++currentSmearNumber;
+                ++numberOfSmears;
             }
 
-           // std_srvs::Empty empty;
-           // if (!liabilityFinishClient.call(empty)) {
-           //     return 0;
-           // }
+            std_srvs::Empty empty;
+            if (!liabilityFinishClient.call(empty)) {
+                return 0;
+            }
             start = false;
         }
     }
