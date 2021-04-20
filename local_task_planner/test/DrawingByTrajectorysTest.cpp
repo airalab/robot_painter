@@ -37,10 +37,14 @@ bool start = false;
 size_t printedMarkers = 0;
 tf2::Matrix3x3 R;
 tf2::Vector3 v;
+std_msgs::String msg;
 const double COLOR_BOTLE_HEIGHT = 0.08;
-const double COLOR_HEIGHT = 0.038;
-const double HEIGHT_OFFSET = 0.02;
-const double BRUSH_HEIGHT = 0.215; //from j6 center
+const double COLOR_HEIGHT = 0.026;
+const double HEIGHT_OFFSET = 0.05;
+//brushes sizes
+//const double BRUSH_HEIGHT = 0.215; //from j6 center big blue brush
+const double BRUSH_HEIGHT = 0.2; //from j6 center small white brush
+
 const double BRUSH_WIDTH = 0.01;
 
 
@@ -167,6 +171,7 @@ int main(int argc, char ** argv)
     ros::ServiceClient paletteClient = nh.serviceClient<kuka_cv::RequestPalette>("/request_palette");
     ros::ServiceClient canvasClient = nh.serviceClient<kuka_cv::RequestCanvas>("/request_canvas");
     ros::ServiceClient startImgProcClient = nh.serviceClient<local_task_planner::TextConverterService>("/convert_text");
+    ros::Publisher start_pub = nh.advertise<std_msgs::String>("film", 10);
 
     /* AIRA Stack */
     ros::Subscriber runSubscriber = nh.subscribe("run", 10, chatterCallback);
@@ -279,6 +284,8 @@ int main(int argc, char ** argv)
 
             // Draw Params
             bool isDraw = true;
+	    msg.data = "start";
+	    start_pub.publish(msg);
 
             size_t numberOfSmears = trajectorys.size();
             size_t currentSmearNumber = 0;
@@ -299,6 +306,8 @@ int main(int argc, char ** argv)
                 //if (currentSmearNumber == numberOfSmears) {
                     ROS_ERROR("Drawing image complete");
                     isDraw = false;
+		    msg.data = "stop";
+            	    start_pub.publish(msg);
                     break;
                 }
 

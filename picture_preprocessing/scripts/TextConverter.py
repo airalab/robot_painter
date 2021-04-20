@@ -85,11 +85,12 @@ def convertText(req):
             PAPER_HEIGHT = cnvsResp.height
             break;
         except rospy.ServiceException, e:
-            print "Service call failed: {}".fromat(e)
+            print "Service call failed: {}".format(e)
 
     rospy.loginfo("Canvas dimensions: {0}x{1} m".format(PAPER_WIDTH, PAPER_HEIGHT))
 
     imageFile = req.data;
+    #imageFile = '/home/kuka/kuka_pics/xrt.jpg'
     rospy.loginfo("path to picture: {0}".format(imageFile))
     if (not os.path.exists(imageFile)):
         rospy.logerr("Error: file '{}' does not exist!".format(imageFile))
@@ -113,10 +114,10 @@ def convertText(req):
     bw = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
     _, bw2 = cv2.threshold(bw, 10, 255, cv2.THRESH_BINARY_INV)
     bw2 = thinning(bw2)
-    cv2.imshow('bw2', bw2)
-    cv2.waitKey(0)
+    #cv2.imshow('bw2', bw2)
+    #cv2.waitKey(0)
 
-    contours, hierarchy = cv2.findContours(bw2, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    im2, contours, hierarchy = cv2.findContours(bw2, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     cv2.drawContours(bw, contours, -1, (100,100,0), 2)
 
     # Create rosbag file
@@ -134,20 +135,12 @@ def convertText(req):
 
         ## Get trajectory from contour
         subcontours = []
-        pi = 0
-        prevCoord = contour[0, 0, 0]
-        sign = np.sign(contour[0, 0, 1] - prevCoord)
-        for i in xrange(1, contour.shape[0]):
-            if (sign*(contour[i, 0, 0] - prevCoord) < 0):
-                subcontours.append(contour[pi:i, 0])
-                sign = np.sign(contour[i, 0, 0] - prevCoord)
-                pi = i
-            prevCoord = contour[i, 0, 0]
 
-        # TODO filter subcontours by array size
-        if contour.shape[0] == 2:
-            subcontours.append(contour[:, 0])
-
+        smear_length = 300
+        num_subcontours = len(contour)/smear_length + 1
+        for i in range(1, num_subcontours):
+            subcontours.append(contour[(i-1)*smear_length:i*smear_length, 0])
+        subcontours.append(contour[(num_subcontours-1)*smear_length:len(contour), 0])
 
         size = len(subcontours)
         try:
