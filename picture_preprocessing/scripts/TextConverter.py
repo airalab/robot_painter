@@ -20,13 +20,30 @@ import geometry_msgs.msg as gmsgs
 from picture_preprocessing.srv import TextConverterService, TextConverterServiceResponse
 from kuka_cv.srv import *
 from kuka_cv.msg import *
+from PIL import Image, ImageDraw
 
 rospack = rospkg.RosPack()
 packagePath = rospack.get_path('picture_preprocessing') + "/"
 
 PAPER_WIDTH = 0.1
 PAPER_HEIGHT = 0.1
+SMEAR_LENGTH = 200
+
 BAG_FILE_PATH = packagePath + "data/"
+
+def create_logo_pic(path_to_original_pic, path_to_logo):
+
+
+    background = Image.open(packagePath + 'scripts/back.png')
+    gaka = Image.open(packagePath + 'scripts/gaka.png')
+    play = Image.open(packagePath + 'scripts/play.png')
+    im = Image.open(path_to_original_pic)
+
+    background.paste(im.resize((280, 280)), (230, 150))
+    background.paste(gaka, (40, 250), gaka)
+    background.paste(play, (int(background.size[0]/2-play.size[0]/2), \
+                            int(background.size[1]/2-play.size[1]/2)), play)
+    background.save(path_to_logo)
 
 def _thinningIteration(im, iter):
     I, M = im, np.zeros(im.shape, np.uint8)
@@ -95,6 +112,12 @@ def convertText(req):
     if (not os.path.exists(imageFile)):
         rospy.logerr("Error: file '{}' does not exist!".format(imageFile))
         return False
+
+    # create_logo_pic
+    logo_name = packagePath + 'data/logo.png'
+    create_logo_pic(imageFile, logo_name)
+
+
     src = cv2.imread(imageFile)
     src = cv2.rotate(src, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
@@ -136,11 +159,10 @@ def convertText(req):
         ## Get trajectory from contour
         subcontours = []
 
-        smear_length = 300
-        num_subcontours = len(contour)/smear_length + 1
+        num_subcontours = len(contour)/SMEAR_LENGTH + 1
         for i in range(1, num_subcontours):
-            subcontours.append(contour[(i-1)*smear_length:i*smear_length, 0])
-        subcontours.append(contour[(num_subcontours-1)*smear_length:len(contour), 0])
+            subcontours.append(contour[(i-1)*SMEAR_LENGTH:i*SMEAR_LENGTH, 0])
+        subcontours.append(contour[(num_subcontours-1)*SMEAR_LENGTH:len(contour), 0])
 
         size = len(subcontours)
         try:

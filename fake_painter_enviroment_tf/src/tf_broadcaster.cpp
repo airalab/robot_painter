@@ -19,20 +19,21 @@ kuka_cv::RequestPalette::Response palette;
 kuka_cv::RequestCanvas::Response canvas;
 
 // Plane constants
-const double A = -0.002192;
-const double B = 0.0005926;
+const double A = 0.00173;
+const double B = 0.0001486;
 const double C = -1;
-const double D = 0.2416;
+const double D = 0.2206;
 
 // Canvas transform
 //horizontal canvas;
-const double px = 0.55654;
-const double py = -0.080908;
+const double px = 0.55654+0.01 ;
+const double py = -0.080908-0.01;
 
-const double qx = 0.0039;
-const double qy = -0.0014;
-const double qz = 0.9998;
-const double qw = -0.02;
+const double qx = 0.0084;
+const double qy = -0.0002;
+const double qz = -0.9998;
+const double qw = 0.0184;
+
 
 geometry_msgs::TransformStamped getCanvasTransform()
 {
@@ -41,16 +42,12 @@ geometry_msgs::TransformStamped getCanvasTransform()
     canvasTransform.child_frame_id = "canvas_link";
     canvasTransform.transform.translation.x = px;
     canvasTransform.transform.translation.y = py;
-    // Canvas on table big brush
-    //canvasTransform.transform.translation.z = 0.015 -(A*px + B*py + D)/C;
-    //canvas on table smal blue brush
-    //canvasTransform.transform.translation.z =-0.007 -(A*px + B*py +D)/C;
-    // Paper on table big brush
-    //canvasTransform.transform.translation.z = -(A*px + B*py +D)/C;
-    // paper on table small blue brush
-    canvasTransform.transform.translation.z = -0.023 -(A*px + B*py + D)/C;
-    //book on table smal blue brush
-    //canvasTransform.transform.translation.z = -0.001 - (A*px + B*py + D)/C;
+    //canvas on table small white brush
+    canvasTransform.transform.translation.z = 0.012 -(A*px + B*py + D)/C;
+    //paper on table small white brush
+    //canvasTransform.transform.translation.z = -0.002 -(A*px + B*py +D)/C;
+    //book on table small white brush
+    //canvasTransform.transform.translation.z = 0.019 -(A*px + B*py + D)/C;
     canvasTransform.transform.rotation.x = qx;
     canvasTransform.transform.rotation.y = qy;
     canvasTransform.transform.rotation.z = qz;
@@ -141,8 +138,8 @@ int main(int argc, char ** argv)
     p.phi = roll; p.theta = pitch; p.psi = yaw;
     canvas.p = p;
     //canvas
-    canvas.width = 0.5;
-    canvas.height = 0.4;
+    canvas.width = 0.355;
+    canvas.height = 0.28;
     //book
     //canvas.width = 0.1;
     //canvas.height = 0.1;
