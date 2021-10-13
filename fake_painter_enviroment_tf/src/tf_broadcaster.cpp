@@ -1,3 +1,4 @@
+
 #include <ros/ros.h>
 
 // TF
@@ -18,18 +19,21 @@ kuka_cv::RequestPalette::Response palette;
 kuka_cv::RequestCanvas::Response canvas;
 
 // Plane constants
-const double A = -0.0641;
-const double B = 0.0214;
-const double C = 0.9977;
-const double D = -0.2198;
+const double A = 0.00173;
+const double B = 0.0001486;
+const double C = -1;
+const double D = 0.2206;
 
 // Canvas transform
-const double px = 0.52;
-const double py = -0.24;
-const double qx = -0.011;
-const double qy = -0.032;
-const double qz = 0.0;
-const double qw = 0.999;
+//horizontal canvas;
+const double px = 0.55654+0.01 ;
+const double py = -0.080908-0.01;
+
+const double qx = 0.0084;
+const double qy = -0.0002;
+const double qz = -0.9998;
+const double qw = 0.0184;
+
 
 geometry_msgs::TransformStamped getCanvasTransform()
 {
@@ -38,7 +42,12 @@ geometry_msgs::TransformStamped getCanvasTransform()
     canvasTransform.child_frame_id = "canvas_link";
     canvasTransform.transform.translation.x = px;
     canvasTransform.transform.translation.y = py;
-    canvasTransform.transform.translation.z = -(A*px + B*py + D)/C;
+    //canvas on table small white brush
+    canvasTransform.transform.translation.z = 0.012 -(A*px + B*py + D)/C;
+    //paper on table small white brush
+    //canvasTransform.transform.translation.z = -0.002 -(A*px + B*py +D)/C;
+    //book on table small white brush
+    //canvasTransform.transform.translation.z = 0.019 -(A*px + B*py + D)/C;
     canvasTransform.transform.rotation.x = qx;
     canvasTransform.transform.rotation.y = qy;
     canvasTransform.transform.rotation.z = qz;
@@ -56,7 +65,8 @@ std::vector<geometry_msgs::TransformStamped> getPaletteTransform()
     colorTransform.child_frame_id = "color_1";
     colorTransform.transform.translation.x = 0.5;
     colorTransform.transform.translation.y = 0.2;
-    colorTransform.transform.translation.z = 0.258;
+    //colorTransform.transform.translation.z = 0.258;
+    colorTransform.transform.translation.z = 0.0;
     colorTransform.transform.rotation.x = 0;
     colorTransform.transform.rotation.y = 0;
     colorTransform.transform.rotation.z = 0;
@@ -127,8 +137,13 @@ int main(int argc, char ** argv)
     p.z = canvasTransformStamped.transform.translation.z;
     p.phi = roll; p.theta = pitch; p.psi = yaw;
     canvas.p = p;
-    canvas.width = 0.210 - 2*0.04;
-    canvas.height = 0.297 - 2*0.04;
+    //canvas
+    canvas.width = 0.355;
+    canvas.height = 0.28;
+    //book
+    //canvas.width = 0.1;
+    //canvas.height = 0.1;
+
 
     /* Palette */
     kuka_cv::Color color;

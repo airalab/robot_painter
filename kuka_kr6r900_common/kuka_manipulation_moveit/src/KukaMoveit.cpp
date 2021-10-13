@@ -51,7 +51,7 @@ bool KukaMoveit::execute(bool showPath)
             ROS_INFO("Visualizing plan as trajectory line");
 
             visual_tools->publishAxisLabeled(p.pose, "pose");
-            visual_tools->publishText(text_pose, "Pose Goal", rvt::WHITE, rvt::XLARGE);
+            //visual_tools->publishText(text_pose, "Pose Goal", rvt::WHITE, rvt::XLARGE);
             visual_tools->publishTrajectoryLine(plan.trajectory_,
                 move_group.getRobotModel()->getJointModelGroup(MANIPULATOR_GROUP), rvt::GREEN);
             visual_tools->trigger();

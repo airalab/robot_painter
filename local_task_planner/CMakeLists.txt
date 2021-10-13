@@ -17,11 +17,22 @@ find_package(catkin REQUIRED COMPONENTS
     moveit_msgs
     kuka_manipulation_moveit
     rosbag
+    message_generation
 )
 
-catkin_package()
+add_service_files(
+  FILES
+  TextConverterService.srv
+)
+
+generate_messages(DEPENDENCIES std_msgs)
+
+catkin_package(
+  CATKIN_DEPENDS message_runtime
+)
 
 include_directories(
+    include
     ${catkin_INCLUDE_DIRS}
 )
 

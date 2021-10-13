@@ -36,7 +36,7 @@ int main(int argc, char ** argv) {
     spinner.start();
 
     // Set logger level to debug
-    // ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug);
+    ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug);
 
 
     std::vector<geometry_msgs::Pose> waypoints;
@@ -118,7 +118,7 @@ void calculatePath(const std::vector<tf2::Vector3> & p, std::vector<geometry_msg
 
     for (size_t i = 1; i < size; ++i) {
         diff = (p[i] - p[i-1])/(POINTS_NUM - 1);
-        for (size_t j = 0; j < POINTS_NUM; ++j) {
+        for (size_t j = 0; j < POINTS_NUM - 1; ++j) {
             toMsg(pose, diff*j + p[i-1]);
             wp.push_back(pose);
         }

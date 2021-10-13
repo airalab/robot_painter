@@ -1,5 +1,5 @@
 controller_list:
-  - name: kuka_arm/arm_controller
+  - name: position_trajectory_controller
     action_ns: follow_joint_trajectory
     type: FollowJointTrajectory
     default: true
