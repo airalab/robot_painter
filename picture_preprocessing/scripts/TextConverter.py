@@ -27,7 +27,7 @@ packagePath = rospack.get_path('picture_preprocessing') + "/"
 
 PAPER_WIDTH = 0.1
 PAPER_HEIGHT = 0.1
-SMEAR_LENGTH = 200
+SMEAR_LENGTH = 400
 
 BAG_FILE_PATH = packagePath + "data/"
 

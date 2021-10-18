@@ -39,12 +39,12 @@ tf2::Matrix3x3 R;
 tf2::Vector3 v;
 std_msgs::String msg;
 const double COLOR_BOTLE_HEIGHT = 0.09;
-const double COLOR_HEIGHT = 0.083;
+const double COLOR_HEIGHT = 0.072;
 const double HEIGHT_OFFSET = 0.05;
 //brushes sizes
 //const double BRUSH_HEIGHT = 0.215; //from j6 center big blue brush
-const double BRUSH_HEIGHT = 0.2; //from j6 center small white brush
-
+//const double BRUSH_HEIGHT = 0.2; //from j6 center small white brush
+const double BRUSH_HEIGHT = 0.213; //from j6 center full blue brush
 const double BRUSH_WIDTH = 0.01;
 
 

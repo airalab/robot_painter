@@ -43,11 +43,13 @@ geometry_msgs::TransformStamped getCanvasTransform()
     canvasTransform.transform.translation.x = px;
     canvasTransform.transform.translation.y = py;
     //canvas on table small white brush
-    canvasTransform.transform.translation.z = 0.012 -(A*px + B*py + D)/C;
-    //paper on table small white brush
-    //canvasTransform.transform.translation.z = -0.002 -(A*px + B*py +D)/C;
-    //book on table small white brush
-    //canvasTransform.transform.translation.z = 0.019 -(A*px + B*py + D)/C;
+    //canvasTransform.transform.translation.z = 0.012 -(A*px + B*py + D)/C;
+    //canvas  on table full blue brush
+    canvasTransform.transform.translation.z = 0.036 -(A*px + B*py +D)/C;
+    //book on table full blue brush
+    //canvasTransform.transform.translation.z = 0.04 -(A*px + B*py + D)/C;
+    //paper on table full blue brush
+    //canvasTransform.transform.translation.z = 0.013 -(A*px + B*py + D)/C;
     canvasTransform.transform.rotation.x = qx;
     canvasTransform.transform.rotation.y = qy;
     canvasTransform.transform.rotation.z = qz;
@@ -138,8 +140,8 @@ int main(int argc, char ** argv)
     p.phi = roll; p.theta = pitch; p.psi = yaw;
     canvas.p = p;
     //canvas
-    canvas.width = 0.355;
-    canvas.height = 0.28;
+    canvas.width = 0.5;
+    canvas.height = 0.4;
     //book
     //canvas.width = 0.1;
     //canvas.height = 0.1;
