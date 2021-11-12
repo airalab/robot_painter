@@ -1,5 +1,0 @@
-<?xml version="1.0" ?>
-<library path="lib/libkr6_kinematics_plugin">
-    <class name="kr6_kinematics_plugin/KR6KinematicsPlugin" type="kr6_kinematics_plugin::KR6KinematicsPlugin" base_class_type="kinematics::KinematicsBase">
-    </class>
-</library>
