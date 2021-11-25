@@ -1,0 +1,25 @@
+[Unit]
+Description=kuka_eki_hw_interface test_hardware_interface.launch serivce
+
+After=network.target
+After=roscore.service
+
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=15
+WorkingDirectory=/home/kuka/catkin_ws/src/robot_painter/
+User=kuka
+
+Environment=ROS_MASTER_URI="http://localhost:11311"
+
+OOMScoreAdjust=-100
+
+ExecStart= /bin/bash -c 'source /home/kuka/catkin_ws/devel/setup.bash \
+	&& roslaunch kuka_eki_hw_interface test_hardware_interface.launch '
+
+
+[Install]
+WantedBy=multi-user.target 
+

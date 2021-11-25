@@ -1,0 +1,27 @@
+[Unit]
+Description=roslaunch kuka_moveit demo.launch serivce
+                                                                                                       
+After=network.target 
+After=roscore.service
+Requires=kuka_eki_hw_interface.service 
+After=kuka_eki_hw_interface.service 
+                                                                                                       
+[Service] 
+Type=simple  
+Restart=always
+RestartSec=15 
+WorkingDirectory=/home/kuka/catkin_ws/src/robot_painter/
+User=kuka
+
+Environment=ROS_MASTER_URI="http://localhost:11311"
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/kuka/.Xauthority
+OOMScoreAdjust=-100
+
+ExecStartPre=/bin/sleep 30
+ExecStart= /bin/bash -c 'source /home/kuka/catkin_ws/devel/setup.bash \
+	&& roslaunch kuka_moveit_config demo.launch'
+                                                                                                      
+[Install]
+WantedBy=multi-user.target
+

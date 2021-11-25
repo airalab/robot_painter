@@ -1,0 +1,27 @@
+[Unit]
+Description=roslaunch kuka_picture_preprocessing launch serivce
+                                                                                                       
+After=network.target 
+After=roscore.service 
+After=kuka_eki_hw_interface.service
+Requires=kuka_moveit_config.service
+After=kuka_moveit_config.service 
+                                                                                                       
+[Service] 
+Type=simple  
+Restart=always
+RestartSec=15 
+WorkingDirectory=/home/kuka/catkin_ws/src/robot_painter/
+User=kuka
+
+Environment=ROS_MASTER_URI="http://localhost:11311"
+
+OOMScoreAdjust=-100
+
+ExecStartPre=/bin/sleep 45
+ExecStart= /bin/bash -c 'source /home/kuka/catkin_ws/devel/setup.bash \
+	&& roslaunch picture_preprocessing picture_process.launch'
+                                                                                                      
+[Install]
+WantedBy=multi-user.target
+

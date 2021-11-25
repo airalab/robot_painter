@@ -1,0 +1,24 @@
+[Unit]
+Description= run fast api server
+
+After=network.target
+After=roscore.service
+
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=15
+WorkingDirectory=/home/kuka/catkin_ws3/src/gakachu-backend
+User=kuka
+
+Environment=ROS_MASTER_URI="http://localhost:11311"
+
+OOMScoreAdjust=-100
+
+ExecStart= /bin/bash -c 'source /home/kuka/catkin_ws3/devel/setup.bash \
+	&& roslaunch gakachu_frontend start_server.launch'
+
+
+[Install]
+WantedBy=multi-user.target 
