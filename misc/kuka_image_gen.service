@@ -9,15 +9,13 @@ After=roscore.service
 Type=simple
 Restart=always
 RestartSec=15
-WorkingDirectory=/home/kuka/catkin_ws3/src/image_generation_Gaka_Chu
 User=kuka
 
 Environment=ROS_MASTER_URI="http://localhost:11311"
 
 OOMScoreAdjust=-100
 
-ExecStart= /bin/bash -c 'source /home/kuka/catkin_ws3/devel/setup.bash \
-	&& roslaunch image_generation image_generation.launch'
+ExecStart=/etc/systemd/system/image_gen.sh
 
 
 [Install]
