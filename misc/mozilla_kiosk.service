@@ -11,8 +11,13 @@ After=gaka_web.service
 Type=simple
 Restert=on-failure
 RestartSec=10
+
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/kuka/.Xauthority
+
 User=kuka
 
+ExecStartPre=/bin/sleep 15
 ExecStart = /bin/bash -c 'firefox --kiosk 127.0.0.1:5000'
 
 [Install]

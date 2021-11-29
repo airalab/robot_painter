@@ -4,6 +4,12 @@ Save all files in *systemd* folder:
 ```shell
 sudo mv * /etc/systemd/system/
 ```
+Make scripts executable:
+```
+cd /etc/systemd/system/
+sudo chmod a+x gaka_web.sh
+sudo chmod a+x image_gen.sh
+```
 Then reload **systemd daemon**:
 ```shell
 sudo systemctl daemon-reload

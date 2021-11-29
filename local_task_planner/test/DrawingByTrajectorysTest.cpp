@@ -163,13 +163,15 @@ void chatterCallback(const std_msgs::String msg)
 void ColorCallback(const std_msgs::String::ConstPtr& msg)
 {
     ROS_INFO("I heard: [%s]", msg->data.c_str());
-    if (msg->data.c_str()) == "plus"){
+    if (msg->data == "plus")
+    {
         COLOR_HEIGHT = COLOR_HEIGHT + 0.001;
-        ROS_INFO("Current Color height is: [%s]", COLOR_HEIGHT);
+        ROS_INFO("Current Color height is: [%f]", COLOR_HEIGHT);
     }
-    if (msg->data.c_str()) == "minus"){
+    if (msg->data == "minus")
+    {
         COLOR_HEIGHT = COLOR_HEIGHT - 0.001;
-        ROS_INFO("Current Color height is: [%s]", COLOR_HEIGHT);
+        ROS_INFO("Current Color height is: [%f]", COLOR_HEIGHT);
     }
 }
 
