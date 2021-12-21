@@ -5,4 +5,4 @@ cd /home/kuka/catkin_ws3/
 catkin build -DPYTHON_EXECUTABLE=/usr/bin/python3
 source /home/kuka/catkin_ws3/devel/setup.bash
 sleep 5
-roslaunch gakachu_frontend start_server.launch
+roslaunch gakachu_backend start_server.launch
