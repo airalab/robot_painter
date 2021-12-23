@@ -3,6 +3,8 @@ Description=image generetion serivce
 
 After=network.target
 After=roscore.service
+Requires=kuka_eki_hw_interface.service
+After=kuka_eki_hw_interface.service
 
 
 [Service]

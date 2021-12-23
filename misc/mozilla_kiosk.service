@@ -2,8 +2,6 @@
 Description=Mozilla start kiosk mode
 
 After=network.target
-Requires=kuka_moveit_config.service
-After=kuka_moveit_config.service
 Requires=gaka_web.service
 After=gaka_web.service
 

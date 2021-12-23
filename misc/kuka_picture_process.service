@@ -18,7 +18,7 @@ Environment=ROS_MASTER_URI="http://localhost:11311"
 
 OOMScoreAdjust=-100
 
-ExecStartPre=/bin/sleep 45
+ExecStartPre=/bin/sleep 15
 ExecStart= /bin/bash -c 'source /home/kuka/catkin_ws/devel/setup.bash \
 	&& roslaunch picture_preprocessing picture_process.launch'
                                                                                                       

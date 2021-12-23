@@ -14,7 +14,7 @@ User=kuka
 
 Environment=ROS_MASTER_URI="http://localhost:11311"
 
-OOMScoreAdjust=-100
+OOMScoreAdjust=-1000
 
 ExecStart= /bin/bash -c 'source /home/kuka/catkin_ws/devel/setup.bash \
 	&& roslaunch kuka_eki_hw_interface test_hardware_interface.launch '

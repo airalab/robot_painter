@@ -1,0 +1,15 @@
+[Unit]
+Description=ROS ipfs sandler  service
+
+After=network.target
+Requires=kuka_eki_hw_interface.service
+After=kuka_eki_hw_interface.service
+
+[Service]
+Type=simple
+User=kuka
+
+ExecStart=/etc/systemd/system/ipfs_sendler.sh
+
+[Install]
+WantedBy=multiuser.target

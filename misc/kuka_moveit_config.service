@@ -18,7 +18,7 @@ Environment=DISPLAY=:0
 Environment=XAUTHORITY=/home/kuka/.Xauthority
 OOMScoreAdjust=-100
 
-ExecStartPre=/bin/sleep 30
+ExecStartPre=/bin/sleep 15
 ExecStart= /bin/bash -c 'source /home/kuka/catkin_ws/devel/setup.bash \
 	&& roslaunch kuka_moveit_config demo.launch'
                                                                                                       

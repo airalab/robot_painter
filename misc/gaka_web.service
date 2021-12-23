@@ -3,6 +3,8 @@ Description= run fast api server
 
 After=network.target
 After=roscore.service
+Requires=kuka_image_gen.service
+After=kuka_image_gen.service
 
 [Service]
 Type=simple
