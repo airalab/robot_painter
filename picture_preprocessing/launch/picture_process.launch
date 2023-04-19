@@ -1,0 +1,5 @@
+<launch>
+  <node name="fake_painter_enviroment" pkg="fake_painter_enviroment_tf" type="tf_broadcaster" output="screen"/>
+  <node name="picture_preprocessing" pkg="picture_preprocessing" type="TextConverter.py" output="screen"/>
+  <node name="local_task_planner" pkg="local_task_planner" type="trajectory_drawing"/>
+</launch>

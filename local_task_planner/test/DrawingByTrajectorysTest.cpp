@@ -39,12 +39,12 @@ tf2::Matrix3x3 R;
 tf2::Vector3 v;
 std_msgs::String msg;
 const double COLOR_BOTLE_HEIGHT = 0.09;
-const double COLOR_HEIGHT = 0.083;
+double COLOR_HEIGHT = 0.072;
 const double HEIGHT_OFFSET = 0.05;
 //brushes sizes
 //const double BRUSH_HEIGHT = 0.215; //from j6 center big blue brush
-const double BRUSH_HEIGHT = 0.2; //from j6 center small white brush
-
+//const double BRUSH_HEIGHT = 0.2; //from j6 center small white brush
+const double BRUSH_HEIGHT = 0.213; //from j6 center full blue brush
 const double BRUSH_WIDTH = 0.01;
 
 
@@ -159,6 +159,22 @@ void chatterCallback(const std_msgs::String msg)
     start = true;
 }
 
+
+void ColorCallback(const std_msgs::String::ConstPtr& msg)
+{
+    ROS_INFO("I heard: [%s]", msg->data.c_str());
+    if (msg->data == "plus")
+    {
+        COLOR_HEIGHT = COLOR_HEIGHT + 0.001;
+        ROS_INFO("Current Color height is: [%f]", COLOR_HEIGHT);
+    }
+    if (msg->data == "minus")
+    {
+        COLOR_HEIGHT = COLOR_HEIGHT - 0.001;
+        ROS_INFO("Current Color height is: [%f]", COLOR_HEIGHT);
+    }
+}
+
 int main(int argc, char ** argv)
 {
     ros::init(argc, argv, "camera_test");
@@ -172,6 +188,7 @@ int main(int argc, char ** argv)
     ros::ServiceClient canvasClient = nh.serviceClient<kuka_cv::RequestCanvas>("/request_canvas");
     ros::ServiceClient startImgProcClient = nh.serviceClient<local_task_planner::TextConverterService>("/convert_text");
     ros::Publisher start_pub = nh.advertise<std_msgs::String>("film", 10);
+    ros::Subscriber color_sub = nh.subscribe("color_height", 10, ColorCallback);
 
     /* AIRA Stack */
     ros::Subscriber runSubscriber = nh.subscribe("run", 10, chatterCallback);
@@ -306,7 +323,7 @@ int main(int argc, char ** argv)
                 //if (currentSmearNumber == numberOfSmears) {
                     ROS_ERROR("Drawing image complete");
                     isDraw = false;
-		    msg.data = "stop";
+                    msg.data = "stop";
             	    start_pub.publish(msg);
                     break;
                 }

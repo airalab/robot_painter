@@ -154,7 +154,7 @@ def convertText(req):
 
         x = (contour[:, 0, 0] - imgWidth/2)*kx
         y = (imgHeight/2 - contour[:, 0, 1])*ky
-        plt.plot(x, y); #plt.show()
+        #plt.plot(x, y); #plt.show()
 
         ## Get trajectory from contour
         subcontours = []
@@ -179,7 +179,7 @@ def convertText(req):
 
                 x = (subcontours[num][:, 0] - imgWidth/2)*kx
                 y = (imgHeight/2 - subcontours[num][:, 1])*ky
-                plt.plot(x, y)
+                # plt.plot(x, y)
                 # Fill trajectory message
                 for p in xrange(x.shape[0]):
                     pose = gmsgs.Pose()
@@ -195,7 +195,7 @@ def convertText(req):
     bag.close()
     rospy.loginfo("Trajectory generated: {}".format(trajectorysNum))
     rospy.loginfo("All trajectorys was write to file {}".format(BAG_FILE_PATH + 'test.bag'))
-    plt.show()
+    # plt.show()
 
     return TextConverterServiceResponse()
 if __name__ == "__main__":
