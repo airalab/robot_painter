@@ -1,3 +1,9 @@
+> **R&D-stage repository.** This is part of the research and development history of
+> Robonomics, kept public for reference. It is **not** the current implementation —
+> for that, see the pinned repositories on the
+> [Airalab organization page](https://github.com/airalab), starting with
+> [robonomics](https://github.com/airalab/robonomics).
+
 ## Software installation on KRC4
 EKI interface is required on both, KRC4 and NUC. Detailed information on how to set it up on KRC4 is presented [here](https://github.com/AlexeiOvcharov/kuka_experimental/tree/a915bf4e932990379c84164713e7ae11a24a2a13/kuka_eki_hw_interface/krl). Launch it on robot's controller.
 
